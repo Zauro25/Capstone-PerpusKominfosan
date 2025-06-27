@@ -1,0 +1,16 @@
+Table audit_logs does not exist, skipping
+Table notifikasis does not exist, skipping
+Table log_revisis does not exist, skipping
+Table laporans does not exist, skipping
+Table verifikasis does not exist, skipping
+Table pengunjungs does not exist, skipping
+Table sdms does not exist, skipping
+Table koleksis does not exist, skipping
+Table admin_perpustakaans does not exist, skipping
+Table perpustakaans does not exist, skipping
+Table admin_dpks does not exist, skipping
+Table executives does not exist, skipping
+Table anggota does not exist, skipping
+Database cleaned successfully!
+
+API tests completed!
