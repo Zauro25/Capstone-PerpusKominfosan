@@ -5,10 +5,9 @@ import (
 	"time"
 	"strings"
 	"fmt"
-	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"strconv"
 	"encoding/json"
 	"github.com/Zauro25/Capstone-PerpusKominfosan/config"
 	"github.com/Zauro25/Capstone-PerpusKominfosan/models"
@@ -358,62 +357,144 @@ func GetPendingVerification(c *gin.Context) {
 }
 
 func GenerateLaporan(c *gin.Context) {
-    adminDPKID := c.GetUint("user_id")
-    
+	adminDPKID := c.GetUint("user_id") // ID admin DPK yang membuat laporan
     var req models.LaporanRequest
     if err := c.ShouldBindJSON(&req); err != nil {
+        fmt.Println("Binding error:", err) // Add logging
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+    fmt.Println("Request body:", req)
 
-    // Generate report content (contoh sederhana)
-    var perpustakaan []models.Perpustakaan
-    if err := config.DB.Find(&perpustakaan).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data perpustakaan"})
-        return
+    // 1. Ambil data statistik
+    var statistik struct {
+        TotalPerpustakaan int64
+        TotalKoleksi      int64
+        TotalPengunjung   int64
+        TotalAnggota      int64
+        TotalSDM          int64
+        PerpustakaanByJenis []struct {
+            Jenis  string
+            Jumlah int64
+        }
+        KunjunganBulanan []struct {
+            Bulan string
+            Jumlah int64
+        }
     }
 
-    // Simpan file (contoh - dalam real implementation simpan ke storage)
-    fileName := "laporan_" + req.Periode + "_" + time.Now().Format("20060102") + "." + req.FormatFile
-    filePath := "./storage/reports/" + fileName
+    // Hitung total data
+    config.DB.Model(&models.Perpustakaan{}).Count(&statistik.TotalPerpustakaan)
+    config.DB.Model(&models.Koleksi{}).Count(&statistik.TotalKoleksi)
+    config.DB.Model(&models.Pengunjung{}).Count(&statistik.TotalPengunjung)
+    config.DB.Model(&models.Anggota{}).Count(&statistik.TotalAnggota)
+    config.DB.Model(&models.SDM{}).Count(&statistik.TotalSDM)
 
-    // Buat direktori jika belum ada
-    if err := os.MkdirAll("./storage/reports", 0755); err != nil {
+    // Data per jenis perpustakaan
+    config.DB.Model(&models.Perpustakaan{}).
+        Select("jenis_perpustakaan as jenis, count(*) as jumlah").
+        Group("jenis_perpustakaan").
+        Scan(&statistik.PerpustakaanByJenis)
+
+    // Data kunjungan bulanan (contoh)
+    config.DB.Raw(`
+        SELECT 
+            to_char(tanggal_kunjungan, 'YYYY-MM') as bulan,
+            sum(jumlah_pengunjung) as jumlah
+        FROM pengunjungs
+        GROUP BY bulan
+        ORDER BY bulan
+    `).Scan(&statistik.KunjunganBulanan)
+
+    // 2. Siapkan data visualisasi
+    chartData := gin.H{
+        "total_data": gin.H{
+            "perpustakaan": statistik.TotalPerpustakaan,
+            "koleksi":      statistik.TotalKoleksi,
+            "pengunjung":   statistik.TotalPengunjung,
+            "anggota":      statistik.TotalAnggota,
+            "sdm":          statistik.TotalSDM,
+        },
+        "jenis_perpustakaan": gin.H{
+            "labels":   []string{},
+            "datasets": []gin.H{{
+                "data":            []int{},
+                "backgroundColor": []string{"#FF6384", "#36A2EB", "#FFCE56"},
+            }},
+        },
+        "kunjungan_bulanan": gin.H{
+            "labels":   []string{},
+            "datasets": []gin.H{{
+                "label":           "Jumlah Pengunjung",
+                "data":            []int{},
+                "backgroundColor": "rgba(75, 192, 192, 0.2)",
+                "borderColor":     "rgba(75, 192, 192, 1)",
+            }},
+        },
+    }
+
+    // Isi data chart
+    for _, j := range statistik.PerpustakaanByJenis {
+        chartData["jenis_perpustakaan"].(gin.H)["labels"] = append(
+            chartData["jenis_perpustakaan"].(gin.H)["labels"].([]string),
+            j.Jenis,
+        )
+        chartData["jenis_perpustakaan"].(gin.H)["datasets"].([]gin.H)[0]["data"] = append(
+            chartData["jenis_perpustakaan"].(gin.H)["datasets"].([]gin.H)[0]["data"].([]int),
+            int(j.Jumlah),
+        )
+    }
+
+    for _, k := range statistik.KunjunganBulanan {
+        chartData["kunjungan_bulanan"].(gin.H)["labels"] = append(
+            chartData["kunjungan_bulanan"].(gin.H)["labels"].([]string),
+            k.Bulan,
+        )
+        chartData["kunjungan_bulanan"].(gin.H)["datasets"].([]gin.H)[0]["data"] = append(
+            chartData["kunjungan_bulanan"].(gin.H)["datasets"].([]gin.H)[0]["data"].([]int),
+            int(k.Jumlah),
+        )
+    }
+
+    // 3. Generate file laporan
+    fileName := fmt.Sprintf("laporan_%s_%s.%s", req.JenisLaporan, time.Now().Format("20060102"), req.FormatFile)
+    filePath := filepath.Join("storage", "reports", fileName)
+
+    if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat direktori penyimpanan"})
         return
     }
 
-    // Generate file berdasarkan format
     var fileContent string
-    switch req.FormatFile {
-    case "csv":
-        fileContent = "Nama Perpustakaan,Alamat,Jenis,Jumlah SDM,Jumlah Pengunjung,Jumlah Anggota\n"
-        for _, p := range perpustakaan {
-            fileContent += fmt.Sprintf("%s,%s,%s,%d,%d,%d\n", 
-                p.NamaPerpustakaan, p.Alamat, p.JenisPerpustakaan, 
-                p.JumlahSDM, p.JumlahPengunjung, p.JumlahAnggota)
-        }
-    case "json":
-        jsonData, _ := json.MarshalIndent(perpustakaan, "", "  ")
-        fileContent = string(jsonData)
-    default: // default PDF (butuh library tambahan seperti gofpdf)
-        fileContent = "PDF generation would be implemented here"
-    }
+	switch req.FormatFile {
+	case "csv":
+		fileContent = generateCSVReport(statistik, chartData)
+	case "json":
+		fileContent = generateJSONReport(statistik, chartData)
+	case "pdf":
+		fileContent = generatePDFReport(statistik, chartData) // Implementasi khusus
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format laporan tidak didukung"})
+		return
+	}
 
     if err := os.WriteFile(filePath, []byte(fileContent), 0644); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan laporan"})
         return
     }
 
-    // Simpan record laporan
+    // 4. Simpan record laporan
+    chartDataJSON, _ := json.Marshal(chartData)
     laporan := models.Laporan{
         Judul:          req.Judul,
         Periode:        req.Periode,
         JenisLaporan:   req.JenisLaporan,
         FilePath:       filePath,
         FormatFile:     req.FormatFile,
+        ChartData:      string(chartDataJSON),
         TanggalGenerate: time.Now(),
         AdminDPKID:     adminDPKID,
+        Status:         "Generated",
     }
 
     if err := config.DB.Create(&laporan).Error; err != nil {
@@ -422,46 +503,103 @@ func GenerateLaporan(c *gin.Context) {
     }
 
     c.JSON(http.StatusOK, gin.H{
-        "data": laporan,
         "message": "Laporan berhasil dibuat",
-        "download_url": "/api/v1/laporan/" + strconv.Itoa(int(laporan.ID)) + "/download",
+        "data": gin.H{
+            "laporan": laporan,
+            "chart_data": chartData,
+        },
+        "download_url": fmt.Sprintf("/api/v1/laporan/%d/download", laporan.ID),
     })
 }
 
-func DownloadLaporan(c *gin.Context) {
-    laporanID := c.Param("id")
-    
-    var laporan models.Laporan
-    if err := config.DB.First(&laporan, laporanID).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Laporan tidak ditemukan"})
-        return
-    }
-
-    // Baca file
-    fileData, err := os.ReadFile(laporan.FilePath)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file laporan"})
-        return
-    }
-
-    // Set headers berdasarkan format file
-    contentType := "application/octet-stream"
-    switch laporan.FormatFile {
-    case "csv":
-        contentType = "text/csv"
-    case "json":
-        contentType = "application/json"
-    case "pdf":
-        contentType = "application/pdf"
-    }
-
-    extraHeaders := map[string]string{
-        "Content-Disposition": fmt.Sprintf("attachment; filename=\"%s\"", filepath.Base(laporan.FilePath)),
-    }
-
-    c.DataFromReader(http.StatusOK, int64(len(fileData)), contentType, bytes.NewReader(fileData), extraHeaders)
+// Fungsi pembantu untuk generate report
+func generateCSVReport(data interface{}, chartData gin.H) string {
+    var content strings.Builder
+    content.WriteString("Total Perpustakaan,Total Koleksi,Total Pengunjung,Total Anggota,Total SDM,Chart Data\n")
+    stats := data.(struct {
+        TotalPerpustakaan, TotalKoleksi, TotalPengunjung, TotalAnggota, TotalSDM int64
+        PerpustakaanByJenis []struct{ Jenis string; Jumlah int64 }
+        KunjunganBulanan []struct{ Bulan string; Jumlah int64 }
+    })
+    chartJSON, _ := json.Marshal(chartData)
+    content.WriteString(fmt.Sprintf("%d,%d,%d,%d,%d,%q\n",
+        stats.TotalPerpustakaan, stats.TotalKoleksi, stats.TotalPengunjung,
+        stats.TotalAnggota, stats.TotalSDM, string(chartJSON)))
+    return content.String()
 }
 
+func generateJSONReport(data interface{}, chartData gin.H) string {
+    report := gin.H{
+        "statistik": data,
+        "visualisasi": chartData,
+    }
+    jsonData, _ := json.MarshalIndent(report, "", "  ")
+    return string(jsonData)
+}
+
+func generatePDFReport(data interface{}, chartData gin.H) string {
+    // Convert chartData to JSON
+    chartJSON, _ := json.Marshal(chartData)
+
+    // Create a temporary HTML file for chart rendering
+    htmlContent := `
+    <html>
+    <body>
+        <h1>Laporan Statistik</h1>
+        <div id="chart"></div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const data = ` + string(chartJSON) + `;
+            new Chart(document.getElementById('chart'), {
+                type: 'bar',
+                data: {
+                    labels: data.jenis_perpustakaan.labels,
+                    datasets: data.jenis_perpustakaan.datasets
+                }
+            });
+        </script>
+    </body>
+    </html>`
+
+    // Save HTML temporarily
+    htmlPath := "temp_chart.html"
+    if err := os.WriteFile(htmlPath, []byte(htmlContent), 0644); err != nil {
+        return ""
+    }
+
+    // Use wkhtmltopdf to convert HTML to PDF
+    pdfPath := filepath.Join("storage", "reports", fmt.Sprintf("laporan_%s.pdf", time.Now().Format("20060102")))
+    cmd := exec.Command("wkhtmltopdf", htmlPath, pdfPath)
+    if err := cmd.Run(); err != nil {
+        return ""
+    }
+
+    // Clean up temporary HTML
+    os.Remove(htmlPath)
+    return pdfPath
+}
+func DownloadLaporan(c *gin.Context) {
+	id := c.Param("id")
+	
+	var laporan models.Laporan
+	if err := config.DB.First(&laporan, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Laporan tidak ditemukan"})
+		return
+	}
+	
+	// Check if file exists
+	if _, err := os.Stat(laporan.FilePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File laporan tidak ditemukan"})
+		return
+	}
+	
+	// Set headers for download
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(laporan.FilePath)))
+	c.Header("Content-Type", "application/octet-stream")
+	
+	// Serve the file
+	c.File(laporan.FilePath)
+}
 func generateReportContent(perpustakaans []models.Perpustakaan) string {
     // Example report generation
     var content strings.Builder
@@ -969,4 +1107,50 @@ func SendReminder(c *gin.Context) {
 	config.DB.Create(&auditLog)
 	
 	c.JSON(http.StatusOK, gin.H{"message": "Pengingat berhasil dikirim"})
+}
+func GetStatistics(c *gin.Context) {
+    // Statistik per jenis perpustakaan
+    var statsByType []struct {
+        JenisPerpustakaan string
+        Total             int
+        TotalKoleksi      int
+        TotalPengunjung   int
+        TotalAnggota      int
+    }
+
+    if err := config.DB.Model(&models.Perpustakaan{}).
+        Select("jenis_perpustakaan, COUNT(*) as total, SUM(jumlah_koleksi) as total_koleksi, SUM(jumlah_pengunjung) as total_pengunjung, SUM(jumlah_anggota) as total_anggota").
+        Group("jenis_perpustakaan").
+        Scan(&statsByType).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil statistik"})
+        return
+    }
+
+    // Statistik perkembangan bulanan
+    var monthlyStats []struct {
+        Bulan    string
+        Kunjungan int
+        Anggota   int
+    }
+
+    currentYear := time.Now().Year()
+    if err := config.DB.Raw(`
+        SELECT 
+            TO_CHAR(tanggal_kunjungan, 'YYYY-MM') as bulan,
+            SUM(jumlah_pengunjung) as kunjungan,
+            COUNT(DISTINCT anggota.id) as anggota
+        FROM pengunjung
+        LEFT JOIN anggota ON anggota.perpustakaan_id = pengunjung.perpustakaan_id
+        WHERE EXTRACT(YEAR FROM tanggal_kunjungan) = ?
+        GROUP BY TO_CHAR(tanggal_kunjungan, 'YYYY-MM')
+        ORDER BY bulan
+    `, currentYear).Scan(&monthlyStats).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil statistik bulanan"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "by_type": statsByType,
+        "monthly": monthlyStats,
+    })
 }

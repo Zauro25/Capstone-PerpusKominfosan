@@ -149,6 +149,7 @@ type Laporan struct {
 	AdminDPKID     uint      `json:"admin_dpk_id" gorm:"not null"`
 	AdminDPK       AdminDPK  `json:"admin_dpk" gorm:"foreignKey:AdminDPKID"`
 	Status         string    `json:"status" gorm:"default:'Generated'"` // Generated/Sent/Archived
+	ChartData	   string    `json:"chart_data" gorm:"type:text"` // JSON untuk chart (optional)
 }
 
 // LogRevisi model
@@ -227,10 +228,10 @@ type VerifikasiRequest struct {
 }
 
 type LaporanRequest struct {
-	Judul        string `json:"judul" binding:"required"`
-	Periode      string `json:"periode" binding:"required"`
-	JenisLaporan string `json:"jenis_laporan" binding:"required"`
-	FormatFile   string `json:"format_file" binding:"required"`
+    Judul        string `json:"judul" binding:"required"`
+    Periode      string `json:"periode" binding:"required"`
+    JenisLaporan string `json:"jenis_laporan" binding:"required"`
+    FormatFile   string `json:"format_file" binding:"required"`
 }
 
 type NotifikasiRequest struct {
