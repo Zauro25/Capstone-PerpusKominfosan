@@ -1,0 +1,18 @@
+
+    <html>
+    <body>
+        <h1>Laporan Statistik</h1>
+        <div id="chart"></div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const data = {"jenis_perpustakaan":{"datasets":[{"backgroundColor":["#FF6384","#36A2EB","#FFCE56"],"data":[1]}],"labels":["Umum"]},"kunjungan_bulanan":{"datasets":[{"backgroundColor":"rgba(75, 192, 192, 0.2)","borderColor":"rgba(75, 192, 192, 1)","data":[],"label":"Jumlah Pengunjung"}],"labels":[]},"total_data":{"anggota":0,"koleksi":0,"pengunjung":0,"perpustakaan":1,"sdm":0}};
+            new Chart(document.getElementById('chart'), {
+                type: 'bar',
+                data: {
+                    labels: data.jenis_perpustakaan.labels,
+                    datasets: data.jenis_perpustakaan.datasets
+                }
+            });
+        </script>
+    </body>
+    </html>

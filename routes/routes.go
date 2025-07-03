@@ -56,6 +56,7 @@ func SetupRoutes(r *gin.Engine) {
 		adminDPK.POST("/notifications/broadcast", controllers.SendBroadcastNotification)
 		adminDPK.GET("/audit-logs", controllers.GetAuditLogs)
 		adminDPK.POST("/send-reminder", controllers.SendReminder)
+		adminDPK.GET("/statistics", controllers.GetStatistics)
 		
 		// Admin perpustakaan management
 		adminDPK.GET("/pending-admin-verifications", controllers.GetPendingAdminVerifications)
@@ -74,7 +75,7 @@ func SetupRoutes(r *gin.Engine) {
 	executive.Use(middleware.RequireRole("executive"))
 	{
 		executive.GET("/dashboard", controllers.GetDashboardExecutive)
-		executive.GET("/statistics", controllers.GetStatistiksPerpustakaan)
+		executive.GET("/statistics", controllers.GetStatistics)
 		executive.GET("/laporan", controllers.GetLaporanExecutive)
 	}
 
