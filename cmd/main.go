@@ -32,7 +32,7 @@ func main() {
 
 	// CORS middleware dengan konfigurasi lebih ketat untuk production
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, // Gunakan env var, default "*" untuk development
+		AllowOrigins:     []string{"http://localhost:5173"}, // Gunakan env var, default "*" untuk development
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type", "Authorization"},

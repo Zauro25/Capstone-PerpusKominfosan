@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 	"encoding/json"
+	"strconv"
 	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
@@ -15,112 +16,128 @@ import (
 )
 
 func Login(c *gin.Context) {
-	var req models.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    var req struct {
+        Username string `json:"username" binding:"required"`
+        Password string `json:"password" binding:"required"`
+    }
 
-	var user interface{}
-	var userID uint
-	var username string
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	switch req.UserType {
-	case "admin_perpustakaan":
-		var adminPerpus models.AdminPerpustakaan
-		if err := config.DB.Where("username = ? AND is_active = ?", req.Username, true).
-			Preload("Perpustakaan").First(&adminPerpus).Error; err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah, atau akun belum diverifikasi"})
-			return
-		}
-		
-		if err := bcrypt.CompareHashAndPassword([]byte(adminPerpus.Password), []byte(req.Password)); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
-			return
-		}
-		
-		// Update last login
-		now := time.Now()
-		adminPerpus.LastLogin = &now
-		config.DB.Save(&adminPerpus)
-		
-		user = adminPerpus
-		userID = adminPerpus.ID
-		username = adminPerpus.Username
+    now := time.Now()
+    var response models.LoginResponse
+    var found bool
 
-	case "admin_dpk":
-		var adminDPK models.AdminDPK
-		if err := config.DB.Where("username = ? AND is_active = ?", req.Username, true).
-			First(&adminDPK).Error; err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
-			return
-		}
-		
-		if err := bcrypt.CompareHashAndPassword([]byte(adminDPK.Password), []byte(req.Password)); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
-			return
-		}
-		
-		// Update last login
-		now := time.Now()
-		adminDPK.LastLogin = &now
-		config.DB.Save(&adminDPK)
-		
-		user = adminDPK
-		userID = adminDPK.ID
-		username = adminDPK.Username
+    // Cek di AdminPerpustakaan
+    var adminPerpus models.AdminPerpustakaan
+    if err := config.DB.Where("username = ? OR email = ?", req.Username, req.Username).
+        Preload("Perpustakaan").First(&adminPerpus).Error; err == nil {
+        if err := bcrypt.CompareHashAndPassword([]byte(adminPerpus.Password), []byte(req.Password)); err == nil {
+            if !adminPerpus.IsActive {
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Akun belum diverifikasi"})
+                return
+            }
+            
+            adminPerpus.LastLogin = &now
+            config.DB.Save(&adminPerpus)
 
-	case "executive":
-		var executive models.Executive
-		if err := config.DB.Where("username = ? AND is_active = ?", req.Username, true).
-			First(&executive).Error; err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
-			return
-		}
-		
-		if err := bcrypt.CompareHashAndPassword([]byte(executive.Password), []byte(req.Password)); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
-			return
-		}
-		
-		// Update last login
-		now := time.Now()
-		executive.LastLogin = &now
-		config.DB.Save(&executive)
-		
-		user = executive
-		userID = executive.ID
-		username = executive.Username
+            token, expiresAt, err := middleware.GenerateToken(adminPerpus.ID, adminPerpus.Username, "admin_perpustakaan")
+            if err != nil {
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token"})
+                return
+            }
 
-	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tipe user tidak valid"})
-		return
-	}
+            response = models.LoginResponse{
+                Token:     token,
+                User:      adminPerpus,
+                UserType:  "admin_perpustakaan",
+                ExpiresAt: expiresAt,
+            }
+            found = true
+        }
+    }
 
-	// Generate token
-	token, expiresAt, err := middleware.GenerateToken(userID, username, req.UserType)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token"})
-		return
-	}
+    // Cek di AdminDPK jika belum ditemukan
+    if !found {
+        var adminDPK models.AdminDPK
+        if err := config.DB.Where("username = ? OR email = ?", req.Username, req.Username).
+            First(&adminDPK).Error; err == nil {
+            if err := bcrypt.CompareHashAndPassword([]byte(adminDPK.Password), []byte(req.Password)); err == nil {
+                adminDPK.LastLogin = &now
+                config.DB.Save(&adminDPK)
 
-	// Create audit log
-	auditLog := models.AuditLog{
-		UserType:  req.UserType,
-		UserID:    userID,
-		Action:    "LOGIN",
-		IPAddress: c.ClientIP(),
-		UserAgent: c.GetHeader("User-Agent"),
-		Timestamp: time.Now(),
-	}
-	config.DB.Create(&auditLog)
+                token, expiresAt, err := middleware.GenerateToken(adminDPK.ID, adminDPK.Username, "admin_dpk")
+                if err != nil {
+                    c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token"})
+                    return
+                }
 
-	c.JSON(http.StatusOK, models.LoginResponse{
-		Token:     token,
-		User:      user,
-		UserType:  req.UserType,
-		ExpiresAt: expiresAt,
-	})
+                response = models.LoginResponse{
+                    Token:     token,
+                    User:      adminDPK,
+                    UserType:  "admin_dpk",
+                    ExpiresAt: expiresAt,
+                }
+                found = true
+            }
+        }
+    }
+
+    // Cek di Executive jika belum ditemukan
+    if !found {
+        var executive models.Executive
+        if err := config.DB.Where("username = ? OR email = ?", req.Username, req.Username).
+            First(&executive).Error; err == nil {
+            if err := bcrypt.CompareHashAndPassword([]byte(executive.Password), []byte(req.Password)); err == nil {
+                executive.LastLogin = &now
+                config.DB.Save(&executive)
+
+                token, expiresAt, err := middleware.GenerateToken(executive.ID, executive.Username, "executive")
+                if err != nil {
+                    c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token"})
+                    return
+                }
+
+                response = models.LoginResponse{
+                    Token:     token,
+                    User:      executive,
+                    UserType:  "executive",
+                    ExpiresAt: expiresAt,
+                }
+                found = true
+            }
+        }
+    }
+
+    if !found {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Username/email atau password salah"})
+        return
+    }
+
+    // Create audit log
+    var userID uint
+    switch u := response.User.(type) {
+    case models.AdminPerpustakaan:
+        userID = u.ID
+    case models.AdminDPK:
+        userID = u.ID
+    case models.Executive:
+        userID = u.ID
+    }
+
+    auditLog := models.AuditLog{
+        UserType:  response.UserType,
+        UserID:    userID,
+        Action:    "LOGIN",
+        IPAddress: c.ClientIP(),
+        UserAgent: c.GetHeader("User-Agent"),
+        Timestamp: now,
+    }
+    config.DB.Create(&auditLog)
+
+    c.JSON(http.StatusOK, response)
 }
 
 func Logout(c *gin.Context) {
@@ -404,13 +421,19 @@ func Register(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan internal"})
 		}
 	}()
-
+	// Convert NomorInduk from string to int
+	nomorIndukInt, err := strconv.Atoi(req.NomorInduk)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nomor induk harus berupa angka"})
+		return
+	}
 	// Create new Perpustakaan
 	perpustakaan := models.Perpustakaan{
 		NamaPerpustakaan:  req.NamaPerpustakaan,
 		Alamat:            req.Alamat,
 		JenisPerpustakaan: req.JenisPerpustakaan,
-		NomorInduk:        req.NomorInduk,
+		NomorInduk:        nomorIndukInt,
 		StatusVerifikasi:  "Pending",
 	}
 

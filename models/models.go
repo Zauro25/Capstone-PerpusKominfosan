@@ -56,17 +56,20 @@ type Executive struct {
 // Perpustakaan model
 type Perpustakaan struct {
 	BaseModel
+	Periode 		string     `json:"periode" gorm:"not null"` 
 	NamaPerpustakaan string     `json:"nama_perpustakaan" gorm:"not null"`
 	Alamat           string     `json:"alamat" gorm:"not null"`
-	JenisPerpustakaan string    `json:"jenis_perpustakaan" gorm:"not null"` // Umum/Sekolah/Khusus
-	NomorInduk       string     `json:"nomor_induk" gorm:"uniqueIndex"`
+	KepalaPerpustakaan string `json:"kepala_perpustakaan"` // Nama kepala perpustakaan
+	JenisPerpustakaan string    `json:"jenis_perpustakaan" gorm:"not null"` // Umum/Sekolah/Khusus/Perguruan Tinggi
+	TahunBerdiri	 int `json:"tahun_berdiri"` // Tahun berdiri perpustakaan
+	NomorInduk       int     `json:"nomor_induk" gorm:"uniqueIndex"`
 	JumlahSDM	   int        `json:"jumlah_sdm" gorm:"default:0"` // Jumlah SDM yang terdaftar
 	JumlahPengunjung int    `json:"jumlah_pengunjung" gorm:"default:0"` // Jumlah pengunjung yang terdaftar
 	JumlahAnggota	int        `json:"jumlah_anggota" gorm:"default:0"` // Jumlah anggota yang terdaftar
 	StatusVerifikasi string     `json:"status_verifikasi" gorm:"default:'Pending'"` // Pending/Terkirim/Disetujui/Direvisi
 	TanggalKirim     *time.Time `json:"tanggal_kirim"`
 	CatatanRevisi    string     `json:"catatan_revisi"`
-	
+	CreatedBy        uint       `json:"created_by" gorm:"index"` // User ID pembuat data
 	// Relations
 	AdminPerpustakaan []AdminPerpustakaan `json:"admin_perpustakaan" gorm:"foreignKey:PerpustakaanID"`
 	Koleksi           []Koleksi           `json:"koleksi" gorm:"foreignKey:PerpustakaanID"`
@@ -201,7 +204,7 @@ type AuditLog struct {
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
-	UserType string `json:"user_type" binding:"required"` // admin_perpustakaan/admin_dpk/executive
+	UserType string `json:"user_type"`
 }
 
 type LoginResponse struct {
@@ -269,10 +272,13 @@ type VerifyAdminRequest struct {
     Catatan            string `json:"catatan"`
 }
 type InputDataPerpustakaanRequest struct {
+	Periode		  string `json:"periode" binding:"required"` // Format YYYY-1 atau YYYY-2
     NamaPerpustakaan  string `json:"nama_perpustakaan" binding:"required"`
     Alamat            string `json:"alamat" binding:"required"`
     JenisPerpustakaan string `json:"jenis_perpustakaan" binding:"required,oneof=Umum Sekolah Khusus"`
-    NomorInduk        string `json:"nomor_induk" binding:"required"`
+	KepalaPerpustakaan string `json:"kepala_perpustakaan"`
+	TahunBerdiri     int    `json:"tahun_berdiri" binding:"required,min=1900,max=2100"` // Validasi tahun
+    NomorInduk        int `json:"nomor_induk" binding:"required"`
     JumlahSDM         int    `json:"jumlah_sdm"`
     JumlahPengunjung  int    `json:"jumlah_pengunjung"`
     JumlahAnggota     int    `json:"jumlah_anggota"`

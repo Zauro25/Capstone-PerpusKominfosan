@@ -70,6 +70,45 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+func AdminPerpustakaanAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := c.GetHeader("Authorization")
+		if tokenString == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Missing token"})
+			return
+		}
+		// Remove "Bearer " prefix if present
+		if strings.HasPrefix(tokenString, "Bearer ") {
+			tokenString = tokenString[7:]
+		}
+		// Parse and validate token
+		claims, err := ParseToken(tokenString)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+			return
+		}
+		// Check user type
+		if claims.UserType != "admin_perpustakaan" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": "Forbidden"})
+			return
+		}
+		// Set user info in context if needed
+		c.Set("user", claims)
+		c.Next()
+	}
+}
+
+// ParseToken parses a JWT token string and returns the Claims if valid.
+func ParseToken(tokenString string) (*Claims, error) {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, err
+	}
+	return claims, nil
+}
 
 func RequireRole(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {

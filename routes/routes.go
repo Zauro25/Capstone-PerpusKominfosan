@@ -29,7 +29,7 @@ func SetupRoutes(r *gin.Engine) {
 
 	// Admin Perpustakaan routes
 	adminPerpus := protected.Group("/admin-perpustakaan")
-	adminPerpus.Use(middleware.RequireRole("admin_perpustakaan"))
+	adminPerpus.Use(middleware.AdminPerpustakaanAuthMiddleware())
 	{
 		adminPerpus.GET("/dashboard", controllers.GetDashboardPerpustakaan)
 		adminPerpus.GET("/data", controllers.GetDataPerpustakaan)
@@ -39,6 +39,8 @@ func SetupRoutes(r *gin.Engine) {
 		adminPerpus.GET("/history", controllers.GetHistoryPengiriman)
 		adminPerpus.GET("/notifications", controllers.GetNotifications)
 		adminPerpus.PUT("/notifications/:id/read", controllers.MarkNotificationAsRead)
+		adminPerpus.GET("/data-list", controllers.GetAllPerpustakaan)
+		adminPerpus.PUT("/data/:id", controllers.UpdateDataPerpustakaan)
 	}
 
 	// Admin DPK routes

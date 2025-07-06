@@ -18,8 +18,8 @@ func InitDB() {
 	// Database connection string
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
 		getEnv("DB_HOST", "localhost"),
-		getEnv("DB_USER", "postgres"),
-		getEnv("DB_PASSWORD", "password"),
+		getEnv("DB_USER", "admin"),
+		getEnv("DB_PASSWORD", "perpustakaandpk123"),
 		getEnv("DB_NAME", "perpustakaan_db"),
 		getEnv("DB_PORT", "5432"),
 	)

@@ -173,7 +173,7 @@ func SendDataToDPK(c *gin.Context) {
     }
     
     if perpustakaan.NamaPerpustakaan == "" || perpustakaan.Alamat == "" || 
-       perpustakaan.JenisPerpustakaan == "" || perpustakaan.NomorInduk == "" {
+       perpustakaan.JenisPerpustakaan == "" || perpustakaan.NomorInduk == 0 {
         c.JSON(http.StatusBadRequest, gin.H{
             "error": "Data perpustakaan belum lengkap",
             "required_fields": []string{
@@ -322,7 +322,6 @@ func GetHistoryPengiriman(c *gin.Context) {
 }
 func InputDataPerpustakaan(c *gin.Context) {
     userID := c.GetUint("user_id")
-    
     // Get admin data with preloaded perpustakaan
     var adminPerpus models.AdminPerpustakaan
     if err := config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error; err != nil {
@@ -345,11 +344,14 @@ func InputDataPerpustakaan(c *gin.Context) {
         }
     }()
 
-    // Update perpustakaan data
+    // Update perpustakaan data sesuai models.Perpustakaan
     perpustakaan := adminPerpus.Perpustakaan
+    perpustakaan.Periode = req.Periode
     perpustakaan.NamaPerpustakaan = req.NamaPerpustakaan
     perpustakaan.Alamat = req.Alamat
+    perpustakaan.KepalaPerpustakaan = req.KepalaPerpustakaan
     perpustakaan.JenisPerpustakaan = req.JenisPerpustakaan
+    perpustakaan.TahunBerdiri = req.TahunBerdiri
     perpustakaan.NomorInduk = req.NomorInduk
     perpustakaan.JumlahSDM = req.JumlahSDM
     perpustakaan.JumlahPengunjung = req.JumlahPengunjung
@@ -372,15 +374,18 @@ func InputDataPerpustakaan(c *gin.Context) {
         TableName: "perpustakaan",
         RecordID:  perpustakaan.ID,
         NewValues: stringifyMap(map[string]interface{}{
+            "periode":            req.Periode,
             "nama_perpustakaan":  req.NamaPerpustakaan,
-            "alamat":            req.Alamat,
+            "alamat":             req.Alamat,
+            "kepala_perpustakaan": req.KepalaPerpustakaan,
             "jenis_perpustakaan": req.JenisPerpustakaan,
-            "nomor_induk":       req.NomorInduk,
-            "jumlah_sdm":        req.JumlahSDM,
-            "jumlah_pengunjung": req.JumlahPengunjung,
-            "jumlah_anggota":    req.JumlahAnggota,
-			"tanggal_kirim":    time.Now(), // Tanggal kirim masih null karena belum dikirim
-            "updated_by":        adminPerpus.NamaLengkap + " (" + adminPerpus.Username + ")",
+            "tahun_berdiri":      req.TahunBerdiri,
+            "nomor_induk":        req.NomorInduk,
+            "jumlah_sdm":         req.JumlahSDM,
+            "jumlah_pengunjung":  req.JumlahPengunjung,
+            "jumlah_anggota":     req.JumlahAnggota,
+            "tanggal_kirim":      time.Now(), // Tanggal kirim masih null karena belum dikirim
+            "updated_by":         adminPerpus.NamaLengkap + " (" + adminPerpus.Username + ")",
         }),
         IPAddress: c.ClientIP(),
         UserAgent: c.GetHeader("User-Agent"),
@@ -408,19 +413,22 @@ func InputDataPerpustakaan(c *gin.Context) {
     // Format response
     response := gin.H{
         "data": gin.H{
-            "id":               perpustakaan.ID,
-            "created_at":       perpustakaan.CreatedAt,
-            "updated_at":       perpustakaan.UpdatedAt,
-            "nama_perpustakaan": perpustakaan.NamaPerpustakaan,
-            "alamat":           perpustakaan.Alamat,
+            "id":                 perpustakaan.ID,
+            "created_at":         perpustakaan.CreatedAt,
+            "updated_at":         perpustakaan.UpdatedAt,
+            "periode":            perpustakaan.Periode,
+            "nama_perpustakaan":  perpustakaan.NamaPerpustakaan,
+            "alamat":             perpustakaan.Alamat,
+            "kepala_perpustakaan": perpustakaan.KepalaPerpustakaan,
             "jenis_perpustakaan": perpustakaan.JenisPerpustakaan,
-            "nomor_induk":      perpustakaan.NomorInduk,
-            "jumlah_sdm":       perpustakaan.JumlahSDM,
-            "jumlah_pengunjung": perpustakaan.JumlahPengunjung,
-            "jumlah_anggota":   perpustakaan.JumlahAnggota,
-            "status_verifikasi": perpustakaan.StatusVerifikasi,
-            "tanggal_kirim":    perpustakaan.TanggalKirim,
-            "catatan_revisi":   perpustakaan.CatatanRevisi,
+            "tahun_berdiri":      perpustakaan.TahunBerdiri,
+            "nomor_induk":        perpustakaan.NomorInduk,
+            "jumlah_sdm":         perpustakaan.JumlahSDM,
+            "jumlah_pengunjung":  perpustakaan.JumlahPengunjung,
+            "jumlah_anggota":     perpustakaan.JumlahAnggota,
+            "status_verifikasi":  perpustakaan.StatusVerifikasi,
+            "tanggal_kirim":      perpustakaan.TanggalKirim,
+            "catatan_revisi":     perpustakaan.CatatanRevisi,
             "admin_perpustakaan": gin.H{
                 "id":           adminPerpus.ID,
                 "nama_lengkap": adminPerpus.NamaLengkap,
