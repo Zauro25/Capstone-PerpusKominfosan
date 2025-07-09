@@ -21,14 +21,45 @@
   box-sizing: border-box;
 }
 
+/* Hide scrollbars globally while maintaining scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
+/* Ensure proper overflow behavior */
+html {
+  overflow: hidden;
+}
+
 html, body {
   height: 100%;
   width: 100%;
 }
 
+body {
+  overflow: hidden;
+  margin: 0;
+}
+
 #app {
   height: 100%;
   width: 100%;
+  overflow: hidden;
+}
+
+/* Ensure scrollable containers maintain functionality */
+.main-section,
+.content-wrapper,
+.table-container,
+.dashboard-content,
+[class*="scroll"] {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 a {

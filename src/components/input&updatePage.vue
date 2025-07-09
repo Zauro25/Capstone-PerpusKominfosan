@@ -296,18 +296,51 @@ export default {
     }
 
     const navigateTo = (route) => {
-      router.push(`/${route}`)
+      // Close sidebar on navigation if mobile
+      if (isMobile.value) {
+        toggleSidebar()
+      }
+
+      switch (route) {
+        case 'dashboard':
+          router.push('/dashboard')
+          break
+        case 'input-update':
+          router.push('/input-update')
+          break
+        case 'pengiriman':
+          router.push('/pengiriman')
+          break
+        case 'validasi':
+          router.push('/validasi')
+          break
+        case 'daftar-data-update':
+          router.push('/daftar-data-update')
+          break
+        default:
+          router.push(`/${route}`)
+      }
     }
 
     const navigateToNotifications = () => {
+      if (isMobile.value) {
+        toggleSidebar()
+      }
       router.push('/notifications')
     }
 
     const goToSettings = () => {
+      if (isMobile.value) {
+        toggleSidebar()
+      }
       router.push('/settings')
     }
 
     const logout = () => {
+      // Clear auth tokens
+      localStorage.removeItem('authToken')
+      sessionStorage.removeItem('authToken')
+      localStorage.removeItem('lastRoute')
       router.push('/login')
     }
 

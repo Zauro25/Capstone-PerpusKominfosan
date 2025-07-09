@@ -33,6 +33,7 @@
       </div>
     </header>
 
+    <!-- Main Content -->
     <div class="main-content">
       <!-- Sidebar -->
       <aside class="sidebar" :class="{ 'active': isSidebarOpen }">
@@ -43,10 +44,10 @@
           <button class="nav-btn" @click="navigateTo('input-update')">
             <span>Input & Update Data</span>
           </button>
-          <button class="nav-btn active">
+          <button class="nav-btn" @click="navigateTo('pengiriman')">
             <span>Pengiriman Data</span>
           </button>
-          <button class="nav-btn" @click="navigateTo('validasi')">
+          <button class="nav-btn active">
             <span>Validasi dan Revisi dari DPK</span>
           </button>
         </nav>
@@ -64,69 +65,66 @@
 
       <!-- Main Section -->
       <main class="main-section">
-        <div class="content-wrapper">
-          <div class="page-header">
-            <h2>Pengiriman Data</h2>
-          </div>
+        <div class="content-container">
+          <h1 class="page-title">Validasi dan Revisi dari DPK</h1>
           
-          <div class="data-table">
-            <h3 class="table-title">Data Perpustakaan</h3>
+          <div class="data-section">
+            <h2>Data Perpustakaan</h2>
             <div class="table-container">
-              <table>
+              <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Periode</th>
+                    <th>Priode</th>
                     <th>Nama Perpustakaan</th>
                     <th>Nama Kepala</th>
-                    <th>Tahun Berdiri</th>
                     <th>Status</th>
+                    <th>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(item, index) in libraryDataByPeriod" :key="item.id">
-                    <td class="periode-cell">
-                      <div class="checkbox-container">
-                        <input 
-                          type="checkbox" 
-                          :id="'checkbox-' + index"
-                          v-model="selectedItems[index]"
-                          :disabled="item.status === 'Sudah Dikirim'"
-                        >
-                        <label :for="'checkbox-' + index">{{ formatPeriode(item.periode) }}</label>
-                      </div>
-                    </td>
-                    <td>{{ item.nama }}</td>
-                    <td>{{ item.kepalaPerpustakaan }}</td>
-                    <td>{{ item.tahunBerdiri }}</td>
+                  <tr v-for="library in libraries" :key="library.id">
+                    <td>{{ formatPeriode(library.periode) }}</td>
+                    <td>{{ library.nama }}</td>
+                    <td>{{ library.kepalaPerpustakaan }}</td>
                     <td>
                       <span 
                         class="status-badge"
-                        :class="{ 'sent': item.status === 'Sudah Dikirim' }"
+                        :class="{
+                          'menunggu': library.status === 'Menunggu',
+                          'revisi': library.status === 'Revisi',
+                          'valid': library.status === 'Valid'
+                        }"
                       >
-                        {{ item.status || 'Belum Dikirim' }}
+                        {{ library.status }}
                       </span>
+                    </td>
+                    <td class="action-buttons">
+                      <button 
+                        class="action-btn validate-btn" 
+                        @click="updateValidationStatus(library.id, 'Valid')"
+                        v-if="library.status !== 'Valid'"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 6L9 17l-5-5"/>
+                        </svg>
+                        <span>Validasi</span>
+                      </button>
+                      <button 
+                        class="action-btn revise-btn" 
+                        @click="updateValidationStatus(library.id, 'Revisi')"
+                        v-if="library.status !== 'Revisi'"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        <span>Revisi</span>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
-
-          <div class="action-buttons">
-            <button 
-              class="btn btn-cancel" 
-              @click="cancelSelection"
-              :disabled="!hasSelectedItems"
-            >
-              Batal
-            </button>
-            <button 
-              class="btn btn-send" 
-              @click="sendData"
-              :disabled="!hasSelectedItems"
-            >
-              Kirim
-            </button>
           </div>
         </div>
       </main>
@@ -135,77 +133,88 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
-import { useLibraryStore } from '../store/libraryStore'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLibraryStore } from '../store/libraryStore'
 
 export default {
-  name: 'PengirimanData',
+  name: 'ValidasiPage',
   setup() {
     const router = useRouter()
     const libraryStore = useLibraryStore()
-    const selectedItems = ref({})
     const isSidebarOpen = ref(false)
     const hasUnreadNotifications = ref(true)
+    const libraries = ref([])
     const isMobile = ref(false)
 
-    // Computed property to get library data grouped by period
-    const libraryDataByPeriod = computed(() => {
-      const data = libraryStore.libraries
-      // Sort by period in descending order (newest first)
-      return data.sort((a, b) => {
-        const [yearA, semA] = a.periode.split('-')
-        const [yearB, semB] = b.periode.split('-')
-        return yearB - yearA || semB - semA
-      })
-    })
-
-    // Computed property to check if any items are selected
-    const hasSelectedItems = computed(() => {
-      return Object.values(selectedItems.value).some(value => value)
-    })
-
-    // Format period string
-    const formatPeriode = (periode) => {
-      const [year, semester] = periode.split('-')
-      return semester === '1' 
-        ? `Semester Ganjil ${year}/${parseInt(year) + 1}`
-        : `Semester Genap ${year}/${parseInt(year) + 1}`
-    }
-
-    // Send selected data
-    const sendData = async () => {
+    // Load library data with validation status
+    const loadLibraryData = () => {
       try {
-        const selectedData = libraryDataByPeriod.value.filter((_, index) => selectedItems.value[index])
-        
-        // Here you would typically send the data to your backend
-        // For now, we'll just mark them as sent in the store
-        selectedData.forEach(data => {
-          libraryStore.updateLibrary(data.id, {
-            ...data,
-            status: 'Sudah Dikirim'
-          })
-        })
-
-        // Clear selections
-        selectedItems.value = {}
-        alert('Data berhasil dikirim!')
+        // Get all libraries from store
+        const allLibraries = libraryStore.libraries
+        // Add validation status if not present
+        libraries.value = allLibraries.map(lib => ({
+          ...lib,
+          status: lib.status || 'Menunggu' // Default status if not set
+        }))
       } catch (error) {
-        console.error('Error sending data:', error)
-        alert('Gagal mengirim data. Silakan coba lagi.')
+        console.error('Error loading library data:', error)
       }
     }
 
-    // Cancel selection
-    const cancelSelection = () => {
-      selectedItems.value = {}
+    // Update library validation status
+    const updateValidationStatus = async (libraryId, newStatus) => {
+      try {
+        await libraryStore.updateLibrary(libraryId, {
+          status: newStatus
+        })
+        // Reload data to reflect changes
+        loadLibraryData()
+      } catch (error) {
+        console.error('Error updating validation status:', error)
+      }
     }
 
-    // Methods for navigation and UI
+    // Edit library data
+    const editLibrary = (id) => {
+      router.push(`/input-update?edit=${id}`)
+    }
+
+    // Format period string
+    const formatPeriode = (periode) => {
+      if (!periode) return ''
+      const [year, semester] = periode.split('-')
+      const semesterText = semester === '1' ? 'Ganjil' : 'Genap'
+      const nextYear = parseInt(year) + 1
+      return `Semester ${semesterText} ${year}/${nextYear}`
+    }
+
+    onMounted(() => {
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
+      document.addEventListener('click', handleClickOutside)
+      // Load initial data
+      loadLibraryData()
+    })
+
+    const checkMobile = () => {
+      isMobile.value = window.innerWidth <= 768
+    }
+
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value
-      if (window.innerWidth <= 768) {
+      if (isMobile.value) {
         document.body.style.overflow = isSidebarOpen.value ? 'hidden' : ''
+      }
+    }
+
+    const handleClickOutside = (event) => {
+      if (isSidebarOpen.value && isMobile.value) {
+        const sidebar = document.querySelector('.sidebar')
+        const menuToggle = document.querySelector('.hamburger-menu')
+        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
+          toggleSidebar()
+        }
       }
     }
 
@@ -227,6 +236,9 @@ export default {
           break
         case 'validasi':
           router.push('/validasi')
+          break
+        case 'daftar-data-update':
+          router.push('/daftar-data-update')
           break
         default:
           router.push(`/${route}`)
@@ -255,40 +267,24 @@ export default {
       router.push('/login')
     }
 
-    onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
+    // Cleanup on component unmount
+    onUnmounted(() => {
+      window.removeEventListener('resize', checkMobile)
+      document.removeEventListener('click', handleClickOutside)
     })
 
-    const checkMobile = () => {
-      isMobile.value = window.innerWidth <= 768
-    }
-
-    const handleClickOutside = (event) => {
-      if (isSidebarOpen.value && window.innerWidth <= 768) {
-        const sidebar = document.querySelector('.sidebar')
-        const menuToggle = document.querySelector('.hamburger-menu')
-        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
-          toggleSidebar()
-        }
-      }
-    }
-
     return {
-      selectedItems,
       isSidebarOpen,
       hasUnreadNotifications,
-      libraryDataByPeriod,
-      hasSelectedItems,
-      formatPeriode,
-      sendData,
-      cancelSelection,
+      libraries,
       toggleSidebar,
       navigateTo,
       navigateToNotifications,
       goToSettings,
-      logout
+      logout,
+      formatPeriode,
+      editLibrary,
+      updateValidationStatus
     }
   }
 }
@@ -296,6 +292,14 @@ export default {
 
 <style scoped>
 /* Reset default margins and padding */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 * {
   box-sizing: border-box;
   font-family: inter, sans-serif;
@@ -307,6 +311,7 @@ export default {
   background-color: #ffffff;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* Header Styles */
@@ -323,6 +328,7 @@ export default {
   right: 0;
   z-index: 1000;
   height: 70px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-left {
@@ -513,7 +519,7 @@ export default {
   display: block;
 }
 
-/* Main Content Styles */
+/* Main Content */
 .main-content {
   display: flex;
   height: calc(100vh - 70px);
@@ -524,204 +530,134 @@ export default {
 .main-section {
   flex: 1;
   margin-left: 250px;
+  padding: 0;
   background-color: #f8f9fa;
   min-height: calc(100vh - 70px);
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
 }
 
-/* WebKit browsers (Chrome, Safari) */
-.main-section::-webkit-scrollbar {
-  display: none;
-}
-
-.content-wrapper {
-  padding: 2rem;
-  height: 100%;
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.page-header h2 {
+/* Additional styles specific to validation page */
+.page-title {
   font-size: 1.5rem;
-  color: #1F2937;
+  color: #1f2937;
+  margin: 1.5rem 2rem;
   font-weight: 600;
-  margin: 0;
 }
 
-.data-table {
+.data-section {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 1.5rem 2rem;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.table-title {
-  font-size: 1.25rem;
-  color: #1e293b;
+.data-section h2 {
+  color: #1f2937;
+  font-size: 1.2rem;
   margin-bottom: 1.5rem;
   font-weight: 600;
 }
 
 .table-container {
   overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
 }
 
-table {
+.data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
-}
-
-thead {
-  background-color: #f8fafc;
-}
-
-th {
   text-align: left;
+}
+
+.data-table th {
+  background-color: #f9fafb;
   padding: 1rem;
   font-weight: 600;
-  color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-td {
+.data-table td {
   padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  color: #1e293b;
-}
-
-tr:hover {
-  background-color: #f8fafc;
-}
-
-.periode-cell {
-  min-width: 250px;
-}
-
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.checkbox-container input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #333;
-  border-radius: 4px;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-color: white;
-  position: relative;
-  margin: 0;
-  transition: all 0.2s ease;
-}
-
-.checkbox-container input[type="checkbox"]:checked {
-  background-color: white;
-  border-color: #333;
-}
-
-.checkbox-container input[type="checkbox"]:checked::before {
-  content: "✓";
-  position: absolute;
-  color: #333;
-  font-size: 16px;
-  font-weight: 900;
-  left: 2px;
-  top: -2px;
-  text-shadow: none;
-  z-index: 2;
-}
-
-.checkbox-container input[type="checkbox"]:hover {
-  border-color: #333;
-}
-
-.checkbox-container input[type="checkbox"]:disabled {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
-  cursor: not-allowed;
-}
-
-.checkbox-container input[type="checkbox"]:disabled:checked::before {
-  opacity: 0.5;
-}
-
-.checkbox-container label {
-  font-size: 0.875rem;
-  color: #475569;
-  cursor: pointer;
-  user-select: none;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.875rem;
   font-weight: 500;
-  background-color: #fee2e2;
-  color: #dc2626;
 }
 
-.status-badge.sent {
-  background-color: #dcfce7;
-  color: #16a34a;
+.status-badge.menunggu {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.status-badge.revisi {
+  background-color: #FEE2E2;
+  color: #991B1B;
+}
+
+.status-badge.valid {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #4B5563;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  background-color: #F3F4F6;
+  color: #1F2937;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.btn {
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-cancel {
-  background-color: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background-color: #e2e8f0;
-}
-
-.btn-send {
-  background-color: #2563eb;
-  color: white;
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.btn-send:hover:not(:disabled) {
-  background-color: #1d4ed8;
+.validate-btn {
+  background-color: #D1FAE5;
+  color: #065F46;
 }
 
-/* Mobile Responsive */
+.validate-btn:hover {
+  background-color: #A7F3D0;
+}
+
+.revise-btn {
+  background-color: #FEE2E2;
+  color: #991B1B;
+}
+
+.revise-btn:hover {
+  background-color: #FCA5A5;
+}
+
+/* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .hamburger-menu {
     display: block;
@@ -748,16 +684,37 @@ tr:hover {
     margin-left: 0;
   }
 
-  .content-wrapper {
+  .page-title {
+    margin: 1rem;
+    font-size: 1.25rem;
+  }
+
+  .data-section {
+    margin: 1rem;
     padding: 1rem;
   }
 
-  .data-table {
-    margin: 0;
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
   }
 
   .action-buttons {
-    padding: 1rem 0;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -770,11 +727,5 @@ tr:hover {
   .logo {
     height: 25px;
   }
-}
-
-/* Ensure the body doesn't show scrollbar */
-body {
-  overflow: hidden;
-  margin: 0;
 }
 </style>

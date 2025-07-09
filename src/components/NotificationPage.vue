@@ -16,7 +16,7 @@
         <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
       </div>
       <div class="header-right">
-        <div class="notification-btn active" @click="navigateToNotifications">
+        <div class="notification-btn" @click="navigateToNotifications">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -64,41 +64,21 @@
       ></div>
 
       <!-- Main Section -->
-      <main class="main-section">
+      <main class="notification-content">
         <h2 class="page-title">Notifikasi</h2>
-        
-        <div class="notifications-container">
-          <div 
-            v-for="notification in notifications" 
-            :key="notification.id"
-            class="notification-card"
-            :class="getStatusClass(notification.status)"
-          >
-            <div class="notification-header">
-              <span class="notification-date">{{ notification.date }}</span>
-            </div>
-            
-            <div class="notification-content">
-              <div class="status-line">
-                <span class="status-label">Status: </span>
-                <span 
-                  class="status-value"
-                  :class="getStatusTextClass(notification.status)"
-                >
-                  {{ notification.status }}
-                </span>
-              </div>
 
-              <div v-if="notification.catatan" class="note-line">
-                <span class="note-label">Catatan: </span>
-                <span class="note-value">{{ notification.catatan }}</span>
-              </div>
-
-              <div class="data-line">
-                <span class="data-label">Data: </span>
-                <span class="data-value">{{ notification.data }}</span>
-              </div>
+        <div class="notifications-list">
+          <div class="notification-item needs-revision">
+            <div class="notification-time">18 Juni 2025, 14:30</div>
+            <div class="notification-status revision">Status: Perlu Revisi</div>
+            <div class="notification-note">
+              <strong>Catatan:</strong> Jumlah Pengunjung bulan Oktober tampaknya tidak realistis (tulis 50 orang, normalnya 200-300 orang). Mohon dicek kembali dan perbaiki. Juga perlu melengkapi data SDM pustakawan yang masih kosong.
             </div>
+          </div>
+
+          <div class="notification-item valid">
+            <div class="notification-time">17 Juni 2025, 9:30</div>
+            <div class="notification-status valid">Status: Valid</div>
           </div>
         </div>
       </main>
@@ -107,7 +87,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -116,38 +96,6 @@ export default {
     const router = useRouter()
     const isSidebarOpen = ref(false)
     const hasUnreadNotifications = ref(true)
-    const isMobile = ref(false)
-    const notifications = ref([
-        {
-          id: 1,
-          date: '18 Juni 2025, 14:30',
-          status: 'Perlu Revisi',
-          catatan: 'Data pengunjung dan SDM pustakawan perlu diperbaiki',
-          data: 'Pengunjung: 50, SDM: Kosong'
-        },
-        {
-          id: 2,
-          date: '15 Juni 2025, 09:15',
-          status: 'Dikirim untuk Verifikasi',
-          data: 'Semester 2 2024 - Semua data valid'
-        },
-        {
-          id: 3,
-          date: '10 Juni 2025, 16:45',
-          status: 'Data Disetujui',
-          data: 'Semester 2 2024 - Semua data valid'
-        }
-    ])
-
-    onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
-    })
-
-    const checkMobile = () => {
-      isMobile.value = window.innerWidth <= 768
-    }
 
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value
@@ -156,17 +104,10 @@ export default {
       }
     }
 
-    const handleClickOutside = (event) => {
-      if (isSidebarOpen.value && window.innerWidth <= 768) {
-        const sidebar = document.querySelector('.sidebar')
-        const menuToggle = document.querySelector('.hamburger-menu')
-        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
-          toggleSidebar()
-        }
-      }
-    }
-
     const navigateTo = (route) => {
+      if (window.innerWidth <= 768) {
+        toggleSidebar()
+      }
       router.push(`/${route}`)
     }
 
@@ -179,46 +120,19 @@ export default {
     }
 
     const logout = () => {
+      localStorage.removeItem('authToken')
+      sessionStorage.removeItem('authToken')
       router.push('/login')
-    }
-
-    const getStatusClass = (status) => {
-      switch (status.toLowerCase()) {
-        case 'perlu revisi':
-          return 'status-revision'
-        case 'dikirim untuk verifikasi':
-          return 'status-verification'
-        case 'data disetujui':
-          return 'status-approved'
-        default:
-          return ''
-      }
-    }
-
-    const getStatusTextClass = (status) => {
-      switch (status.toLowerCase()) {
-        case 'perlu revisi':
-          return 'text-revision'
-        case 'dikirim untuk verifikasi':
-          return 'text-verification'
-        case 'data disetujui':
-          return 'text-approved'
-        default:
-          return ''
-      }
     }
 
     return {
       isSidebarOpen,
       hasUnreadNotifications,
-      notifications,
       toggleSidebar,
       navigateTo,
       navigateToNotifications,
       goToSettings,
-      logout,
-      getStatusClass,
-      getStatusTextClass
+      logout
     }
   }
 }
@@ -464,11 +378,11 @@ html, body {
 }
 
 /* Main Section */
-.main-section {
+.notification-content {
   flex: 1;
   margin-left: 250px;
-  padding: 0;
-  background-color: #f8f9fa;
+  padding: 2rem;
+  background-color: #F3F4F6;
   min-height: calc(100vh - 70px);
   overflow-y: auto;
 }
@@ -496,7 +410,7 @@ html, body {
     transform: translateX(0);
   }
 
-  .main-section {
+  .notification-content {
     margin-left: 0;
   }
 }
@@ -515,57 +429,62 @@ html, body {
 /* Notification styles */
 .page-title {
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #0E2954;
   margin-bottom: 1.5rem;
 }
 
-.notification-card {
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.notification-date {
+.notification-item {
+  background-color: #EFF6FF;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  border-left: 4px solid;
+}
+
+.notification-item.needs-revision {
+  border-left-color: #F97316;
+}
+
+.notification-item.valid {
+  border-left-color: #22C55E;
+  background-color: #F0FDF4;
+}
+
+.notification-time {
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   font-size: 0.875rem;
+  color: #4B5563;
+  margin-bottom: 0.5rem;
 }
 
-.status-label,
-.note-label,
-.data-label {
+.notification-status {
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   font-weight: 500;
+  margin-bottom: 0.75rem;
 }
 
-.status-value,
-.note-value,
-.data-value {
+.notification-status.revision {
+  color: #F97316;
+}
+
+.notification-status.valid {
+  color: #22C55E;
+}
+
+.notification-note {
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  font-weight: 400;
+  color: #1F2937;
+  line-height: 1.5;
 }
 
-/* Status Colors */
-.status-revision {
-  border-left: 4px solid #ef4444;
-}
-
-.status-verification {
-  border-left: 4px solid #3b82f6;
-}
-
-.status-approved {
-  border-left: 4px solid #10b981;
-}
-
-.text-revision {
-  color: #ef4444;
-}
-
-.text-verification {
-  color: #3b82f6;
-}
-
-.text-approved {
-  color: #10b981;
+.notification-note strong {
+  font-weight: 600;
 }
 </style> 

@@ -64,35 +64,46 @@
 
       <!-- Dashboard Content -->
       <main class="dashboard-content">
-        <h2>Dashboard</h2>
+        <h2 class="page-title">Dashboard</h2>
         
-        <!-- Semester Selector -->
-        <div class="semester-selector">
-          <select v-model="selectedSemester" @change="fetchDashboardData">
+        <!-- Filter Section -->
+        <div class="filter-section">
+          <select class="semester-select" v-model="selectedSemester">
             <option value="2025-2">Semester Genap 2025/2026</option>
             <option value="2024-1">Semester Ganjil 2024/2025</option>
             <option value="2024-2">Semester Genap 2024/2025</option>
             <option value="2023-1">Semester Ganjil 2023/2024</option>
             <option value="2023-2">Semester Genap 2023/2024</option>
           </select>
+          <select class="library-select">
+            <option>Perpustakaan Sejahtera</option>
+            <!-- Add more options as needed -->
+          </select>
         </div>
 
-        <!-- Statistics Chart -->
-        <div class="stats-chart">
+        <!-- Visitor Statistics Chart -->
+        <div class="stats-section">
           <h3>Statistik Pengunjung</h3>
-          <canvas ref="visitorChart"></canvas>
+          <div class="chart-container">
+            <canvas ref="visitorChart"></canvas>
+          </div>
         </div>
 
-        <!-- Distribution Charts -->
+        <!-- Charts Grid -->
         <div class="charts-grid">
+          <!-- Library Type Distribution -->
           <div class="chart-card">
             <h3>Distribusi Jenis Perpustakaan</h3>
             <canvas ref="libraryTypeChart"></canvas>
           </div>
+          
+          <!-- Verification Status -->
           <div class="chart-card">
             <h3>Status Verifikasi Data</h3>
             <canvas ref="verificationChart"></canvas>
           </div>
+          
+          <!-- Visitor and Member Trends -->
           <div class="chart-card">
             <h3>Tren Pengunjung dan Anggota (6 Bulan Terakhir)</h3>
             <canvas ref="trendChart"></canvas>
@@ -103,20 +114,20 @@
         <div class="summary-cards">
           <div class="summary-card">
             <div class="icon-wrapper">
-              <img src="../assets/total perpustakaan.png" alt="Library Icon" class="summary-icon">
+              <img src="../assets/total perpustakaan.png" alt="Library Icon">
             </div>
-            <div class="card-content">
+            <div class="summary-info">
               <h4>Total Perpustakaan</h4>
-              <p>{{ totalLibraries }}</p>
+              <p>200</p>
             </div>
           </div>
           <div class="summary-card">
             <div class="icon-wrapper">
-              <img src="../assets/total sdm.png" alt="Staff Icon" class="summary-icon">
+              <img src="../assets/total sdm.png" alt="Staff Icon">
             </div>
-            <div class="card-content">
+            <div class="summary-info">
               <h4>Total SDM</h4>
-              <p>{{ totalStaff }}</p>
+              <p>500</p>
             </div>
           </div>
         </div>
@@ -126,133 +137,69 @@
 </template>
 
 <script>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Chart from 'chart.js/auto'
 
 export default {
-  data() {
-    return {
-      selectedSemester: '2025-2',
-      showNotifications: false,
-      hasUnreadNotifications: false,
-      notifications: [],
-      totalLibraries: 0,
-      totalStaff: 0,
-      isSidebarOpen: false,
-      isMobile: false,
-      charts: {
-        visitorChart: null,
-        libraryTypeChart: null,
-        verificationChart: null,
-        trendChart: null
-      }
-    }
-  },
-  async created() {
-    await this.fetchDashboardData()
-    await this.fetchNotifications()
-    this.checkMobile()
-    window.addEventListener('resize', this.checkMobile)
-    document.addEventListener('click', this.handleClickOutside)
-  },
-  mounted() {
-    this.initializeCharts()
-  },
-  beforeDestroy() {
-    window.removeEventListener('resize', this.checkMobile)
-    document.removeEventListener('click', this.handleClickOutside)
-  },
-  methods: {
-    checkMobile() {
-      this.isMobile = window.innerWidth <= 768
-    },
-    toggleSidebar() {
-      this.isSidebarOpen = !this.isSidebarOpen
+  name: 'DashboardPage',
+  setup() {
+    const router = useRouter()
+    const visitorChart = ref(null)
+    const libraryTypeChart = ref(null)
+    const verificationChart = ref(null)
+    const trendChart = ref(null)
+    const isSidebarOpen = ref(false)
+    const hasUnreadNotifications = ref(false)
+    const selectedSemester = ref('2025-2')
+
+    const toggleSidebar = () => {
+      isSidebarOpen.value = !isSidebarOpen.value
       // Prevent body scroll when sidebar is open on mobile
       if (window.innerWidth <= 768) {
-        document.body.style.overflow = this.isSidebarOpen ? 'hidden' : ''
+        document.body.style.overflow = isSidebarOpen.value ? 'hidden' : ''
       }
-    },
-    handleClickOutside(event) {
-      // Close sidebar when clicking outside on mobile
-      if (this.isSidebarOpen && window.innerWidth <= 768) {
-        const sidebar = document.querySelector('.sidebar')
-        const menuToggle = document.querySelector('.hamburger-menu')
-        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
-          this.toggleSidebar()
-        }
-      }
-    },
-    async fetchDashboardData() {
-      try {
-        const response = await fetch(`/api/dashboard-data?semester=${this.selectedSemester}`)
-        const data = await response.json()
-        
-        this.totalLibraries = data.totalLibraries || 0
-        this.totalStaff = data.totalStaff || 0
-        
-        this.updateCharts(data)
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error)
-      }
-    },
-    async fetchNotifications() {
-      try {
-        const response = await fetch('/api/notifications')
-        const data = await response.json()
-        this.notifications = data.notifications || [
-          { id: 1, message: 'Data perpustakaan baru telah ditambahkan', time: '5 menit yang lalu', read: false },
-          { id: 2, message: 'Validasi data menunggu persetujuan', time: '1 jam yang lalu', read: false }
-        ]
-        this.hasUnreadNotifications = this.notifications.some(n => !n.read)
-      } catch (error) {
-        console.error('Error fetching notifications:', error)
-      }
-    },
-    initializeCharts() {
-      const commonDoughnutOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '60%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 12,
-              padding: 15,
-              font: {
-                size: 11
-              }
-            }
-          }
-        },
-        layout: {
-          padding: {
-            top: 10,
-            bottom: 10,
-            left: 10,
-            right: 10
-          }
-        }
-      };
+    }
 
-      // Initialize visitor chart
-      this.charts.visitorChart = new Chart(this.$refs.visitorChart, {
+    const navigateTo = (route) => {
+      if (window.innerWidth <= 768) {
+        toggleSidebar()
+      }
+      router.push(`/${route}`)
+    }
+
+    const navigateToNotifications = () => {
+      router.push('/notifications')
+    }
+
+    const goToSettings = () => {
+      router.push('/settings')
+    }
+
+    const logout = () => {
+      localStorage.removeItem('authToken')
+      sessionStorage.removeItem('authToken')
+      router.push('/login')
+    }
+
+    onMounted(() => {
+      // Visitor Statistics Line Chart
+      const visitorCtx = visitorChart.value.getContext('2d')
+      new Chart(visitorCtx, {
         type: 'line',
         data: {
           labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
           datasets: [
             {
               label: 'Jumlah Pengunjung',
-              borderColor: '#4318FF',
-              backgroundColor: '#4318FF',
-              data: [],
+              data: [800, 600, 700, 650, 750, 800, 850, 750, 700, 800, 750, 800],
+              borderColor: '#2563EB',
               tension: 0.4
             },
             {
               label: 'Jumlah Anggota',
-              borderColor: '#E31A1A',
-              backgroundColor: '#E31A1A',
-              data: [],
+              data: [500, 400, 450, 500, 600, 550, 500, 450, 400, 450, 500, 600],
+              borderColor: '#DC2626',
               tension: 0.4
             }
           ]
@@ -260,133 +207,99 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                boxWidth: 12,
-                padding: 15,
-                font: {
-                  size: 11
-                }
-              }
-            }
-          },
           scales: {
             y: {
               beginAtZero: true,
               max: 1000,
               ticks: {
-                stepSize: 200,
-                font: {
-                  size: 10
-                }
-              }
-            },
-            x: {
-              ticks: {
-                font: {
-                  size: 10
-                }
+                stepSize: 200
               }
             }
           }
         }
-      });
+      })
 
-      // Initialize library type chart (donut)
-      this.charts.libraryTypeChart = new Chart(this.$refs.libraryTypeChart, {
+      // Library Type Distribution Donut Chart
+      const libraryTypeCtx = libraryTypeChart.value.getContext('2d')
+      new Chart(libraryTypeCtx, {
         type: 'doughnut',
         data: {
           labels: ['Perpustakaan Umum', 'Perpustakaan Sekolah', 'Perpustakaan Khusus'],
           datasets: [{
-            data: [],
-            backgroundColor: ['#0E2954', '#4318FF', '#E31A1A']
+            data: [30, 50, 20],
+            backgroundColor: ['#DC2626', '#4F46E5', '#2563EB']
           }]
         },
-        options: commonDoughnutOptions
-      });
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      })
 
-      // Initialize verification status chart (donut)
-      this.charts.verificationChart = new Chart(this.$refs.verificationChart, {
+      // Verification Status Pie Chart
+      const verificationCtx = verificationChart.value.getContext('2d')
+      new Chart(verificationCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Data Menunggu', 'Data Revisi', 'Data Valid'],
+          datasets: [{
+            data: [20, 30, 50],
+            backgroundColor: ['#DC2626', '#4F46E5', '#1E40AF']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      })
+
+      // Visitor and Member Trends Donut Chart
+      const trendCtx = trendChart.value.getContext('2d')
+      new Chart(trendCtx, {
         type: 'doughnut',
         data: {
-          labels: ['Data Valid', 'Data Revisi', 'Data Menunggu'],
+          labels: ['Data Anggota Aktif', 'Data Pengunjung'],
           datasets: [{
-            data: [],
-            backgroundColor: ['#0E2954', '#4318FF', '#E31A1A']
+            data: [60, 40],
+            backgroundColor: ['#4F46E5', '#1E40AF']
           }]
         },
-        options: commonDoughnutOptions
-      });
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              padding: 20,
+              labels: {
+                padding: 15,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            }
+          },
+          layout: {
+            padding: {
+              bottom: 20
+            }
+          }
+        }
+      })
+    })
 
-      // Initialize trend chart (donut)
-      this.charts.trendChart = new Chart(this.$refs.trendChart, {
-        type: 'doughnut',
-        data: {
-          labels: ['Data Pengunjung', 'Data Anggota Aktif'],
-          datasets: [{
-            data: [],
-            backgroundColor: ['#0E2954', '#4318FF']
-          }]
-        },
-        options: commonDoughnutOptions
-      });
-    },
-    updateCharts(data) {
-      if (this.charts.visitorChart && data.visitorData) {
-        this.charts.visitorChart.data.datasets[0].data = data.visitorData
-        this.charts.visitorChart.data.datasets[1].data = data.memberData
-        this.charts.visitorChart.update()
-      }
-      if (this.charts.libraryTypeChart && data.libraryTypeData) {
-        this.charts.libraryTypeChart.data.datasets[0].data = data.libraryTypeData
-        this.charts.libraryTypeChart.update()
-      }
-      if (this.charts.verificationChart && data.verificationData) {
-        this.charts.verificationChart.data.datasets[0].data = data.verificationData
-        this.charts.verificationChart.update()
-      }
-      if (this.charts.trendChart && data.trendData) {
-        this.charts.trendChart.data.datasets[0].data = data.trendData
-        this.charts.trendChart.update()
-      }
-    },
-    toggleNotifications() {
-      this.showNotifications = !this.showNotifications
-    },
-    async readNotification(id) {
-      try {
-        await fetch(`/api/notifications/${id}/read`, { method: 'POST' })
-        this.notifications = this.notifications.map(n => 
-          n.id === id ? { ...n, read: true } : n
-        )
-        this.hasUnreadNotifications = this.notifications.some(n => !n.read)
-      } catch (error) {
-        console.error('Error marking notification as read:', error)
-      }
-    },
-    async markAllAsRead() {
-      try {
-        await fetch('/api/notifications/mark-all-read', { method: 'POST' })
-        this.notifications = this.notifications.map(n => ({ ...n, read: true }))
-        this.hasUnreadNotifications = false
-      } catch (error) {
-        console.error('Error marking all notifications as read:', error)
-      }
-    },
-    navigateTo(route) {
-      this.$router.push(`/${route}`)
-    },
-    goToSettings() {
-      this.$router.push('/settings')
-    },
-    logout() {
-      localStorage.removeItem('authToken')
-      this.$router.push('/login')
-    },
-    navigateToNotifications() {
-      this.$router.push('/notifications');
+    return {
+      visitorChart,
+      libraryTypeChart,
+      verificationChart,
+      trendChart,
+      isSidebarOpen,
+      hasUnreadNotifications,
+      selectedSemester,
+      toggleSidebar,
+      navigateTo,
+      navigateToNotifications,
+      goToSettings,
+      logout
     }
   }
 }
@@ -608,13 +521,17 @@ html, body {
   margin-top: 70px;
 }
 
-.dashboard-content h2 {
-  margin: 0;
-  padding: 1rem 0;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 1.25rem;
+.sub-header {
+  background-color: #0E2954;
+  padding: 1rem 2rem;
+  margin: -2rem -2rem 2rem -2rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #0E2954;
+  margin-bottom: 1.5rem;
 }
 
 .semester-selector {
@@ -856,37 +773,40 @@ html, body {
 /* Hamburger Menu Styles */
 .hamburger-menu {
   display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 20px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
-  z-index: 1001;
+  padding: 0;
+  margin-right: 1rem;
 }
 
 .hamburger-menu span {
   display: block;
-  width: 25px;
-  height: 3px;
+  width: 100%;
+  height: 2px;
   background-color: white;
-  margin: 5px 0;
   transition: all 0.3s ease;
 }
 
-.hamburger-menu.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+.hamburger-menu.active span:first-child {
+  transform: translateY(9px) rotate(45deg);
 }
 
 .hamburger-menu.active span:nth-child(2) {
   opacity: 0;
 }
 
-.hamburger-menu.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
+.hamburger-menu.active span:last-child {
+  transform: translateY(-9px) rotate(-45deg);
 }
 
 @media screen and (max-width: 768px) {
   .hamburger-menu {
-    display: block;
+    display: flex;
   }
   
   .header {
@@ -915,4 +835,134 @@ html, body {
 }
 
 /* Rest of your existing styles */
+.dashboard-content {
+  padding: 2rem;
+  background-color: #F3F4F6;
+  min-height: calc(100vh - 70px);
+  margin-top: 70px;
+  margin-left: 250px;
+}
+
+.filter-section {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.semester-select,
+.library-select {
+  padding: 0.75rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.375rem;
+  background-color: white;
+  min-width: 250px;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.semester-select:focus,
+.library-select:focus {
+  outline: none;
+  border-color: #0E2954;
+  box-shadow: 0 0 0 2px rgba(14, 41, 84, 0.1);
+}
+
+.stats-section {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.chart-container {
+  height: 300px;
+  margin-top: 1rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card h3 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.chart-card canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.summary-card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-wrapper img {
+  width: 48px;
+  height: 48px;
+}
+
+.summary-info h4 {
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.summary-info p {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1E40AF;
+}
+
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+  }
+}
 </style>

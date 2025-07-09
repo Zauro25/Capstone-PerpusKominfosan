@@ -3,53 +3,58 @@ import LoginPage from '../components/LoginPage.vue'
 import DashboardPage from '../components/DashboardPage.vue'
 import InputUpdatePage from '../components/input&updatePage.vue'
 import DaftarData from '../components/DaftarData.vue'
-import NotificationPage from '../components/NotificationPage.vue'
-import DetailPage from '../components/DetailPage.vue'
 import PengirimanDataPage from '../components/pengirimanDataPage.vue'
+import ValidasiPage from '../components/validasi.vue'
+import NotificationPage from '../components/NotificationPage.vue'
+import LandingPage from '../components/LandingPage.vue'
 
 const routes = [
-  { 
-    path: '/', 
-    redirect: () => {
-      const lastRoute = localStorage.getItem('lastRoute');
-      return lastRoute ? `/${lastRoute}` : '/login';
-    }
+  {
+    path: '/',
+    name: 'landing',
+    component: LandingPage
   },
-  { 
-    path: '/login', 
-    component: LoginPage,
-    meta: { requiresAuth: false } 
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginPage
   },
-  { 
-    path: '/dashboard', 
+  {
+    path: '/dashboard',
+    name: 'dashboard',
     component: DashboardPage,
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true }
   },
-  { 
-    path: '/input-update', 
+  {
+    path: '/input-update',
+    name: 'input-update',
     component: InputUpdatePage,
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true }
   },
-  { 
-    path: '/daftar-data-update', 
+  {
+    path: '/daftar-data-update',
+    name: 'daftar-data-update',
     component: DaftarData,
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true }
   },
-  { 
-    path: '/notifications', 
-    component: NotificationPage,
-    meta: { requiresAuth: true } 
-  },
-  { 
-    path: '/detail/:id', 
-    component: DetailPage,
-    meta: { requiresAuth: true } 
-  },
-  { 
-    path: '/pengiriman', 
+  {
+    path: '/pengiriman',
+    name: 'pengiriman',
     component: PengirimanDataPage,
-    meta: { requiresAuth: true } 
+    meta: { requiresAuth: true }
   },
+  {
+    path: '/validasi',
+    name: 'validasi',
+    component: ValidasiPage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: NotificationPage,
+    meta: { requiresAuth: true }
+  }
 ]
 
 const router = createRouter({
@@ -57,24 +62,21 @@ const router = createRouter({
   routes
 })
 
-// Remove the initial load clear since we want to persist the state
-// const isInitialLoad = true;
-// if (isInitialLoad) {
-//   localStorage.removeItem('authToken');
-//   sessionStorage.removeItem('authToken');
-// }
-
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('authToken') || sessionStorage.getItem('authToken')
-
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    localStorage.removeItem('lastRoute'); // Clear last route if not authenticated
-    next('/login')
-  } else {
-    if (to.path !== '/login') {
-      localStorage.setItem('lastRoute', to.path.substring(1));
+  
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      next('/login')
+    } else {
+      next()
     }
-    next()
+  } else {
+    if (isAuthenticated && (to.path === '/login' || to.path === '/')) {
+      next('/dashboard')
+    } else {
+      next()
+    }
   }
 })
 
