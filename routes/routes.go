@@ -32,15 +32,16 @@ func SetupRoutes(r *gin.Engine) {
 	adminPerpus.Use(middleware.AdminPerpustakaanAuthMiddleware())
 	{
 		adminPerpus.GET("/dashboard", controllers.GetDashboardPerpustakaan)
-		adminPerpus.GET("/data", controllers.GetDataPerpustakaan)
+		adminPerpus.GET("/data/:id", controllers.GetPerpustakaanByID)
 		adminPerpus.PUT("/data", controllers.UpdateDataPerpustakaan)
 		adminPerpus.POST("/input-data", controllers.InputDataPerpustakaan)
-		adminPerpus.POST("/send-data", controllers.SendDataToDPK)
+		adminPerpus.POST("data/:id/send-data", controllers.SendDataToDPK)
 		adminPerpus.GET("/history", controllers.GetHistoryPengiriman)
 		adminPerpus.GET("/notifications", controllers.GetNotifications)
 		adminPerpus.PUT("/notifications/:id/read", controllers.MarkNotificationAsRead)
-		adminPerpus.GET("/data-list", controllers.GetAllPerpustakaan)
+		adminPerpus.GET("/data", controllers.GetDataPerpustakaan)
 		adminPerpus.PUT("/data/:id", controllers.UpdateDataPerpustakaan)
+		adminPerpus.DELETE("/data/:id", controllers.DeleteDataPerpustakaan)
 	}
 
 	// Admin DPK routes

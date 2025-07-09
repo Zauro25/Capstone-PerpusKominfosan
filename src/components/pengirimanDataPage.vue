@@ -95,9 +95,9 @@
                         <label :for="'checkbox-' + index">{{ formatPeriode(item.periode) }}</label>
                       </div>
                     </td>
-                    <td>{{ item.nama }}</td>
-                    <td>{{ item.kepalaPerpustakaan }}</td>
-                    <td>{{ item.tahunBerdiri }}</td>
+                    <td>{{ item.nama_perpustakaan }}</td>
+                    <td>{{ item.kepala_perpustakaan }}</td>
+                    <td>{{ item.tahun_berdiri }}</td>
                     <td>
                       <span 
                         class="status-badge"
@@ -180,12 +180,10 @@ export default {
         
         // Here you would typically send the data to your backend
         // For now, we'll just mark them as sent in the store
-        selectedData.forEach(data => {
-          libraryStore.updateLibrary(data.id, {
-            ...data,
-            status: 'Sudah Dikirim'
-          })
-        })
+        for (const data of selectedData) {
+          await libraryStore.sendDataToDPK(data.id)
+        }
+
 
         // Clear selections
         selectedItems.value = {}
@@ -225,7 +223,12 @@ export default {
       router.push('/login')
     }
 
-    onMounted(() => {
+    onMounted(async () => {
+      try {
+        await libraryStore.fetchLibraries()
+      } catch (err) {
+        console.error('Gagal fetch data perpustakaan:', err)
+      }
       checkMobile()
       window.addEventListener('resize', checkMobile)
       document.addEventListener('click', handleClickOutside)

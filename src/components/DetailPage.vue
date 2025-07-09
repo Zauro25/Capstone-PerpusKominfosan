@@ -219,12 +219,17 @@ export default {
       router.push('/daftar-data-update')
     }
 
-    const loadLibraryData = () => {
-      const id = parseInt(router.currentRoute.value.params.id)
-      const data = libraryStore.getLibraryById(id)
-      if (data) {
-        libraryData.value = data
-      } else {
+    const loadLibraryData = async () => {
+      try {
+        const id = parseInt(router.currentRoute.value.params.id)
+        const data = await libraryStore.getLibraryById(id)
+        if (data) {
+          libraryData.value = data
+        } else {
+          router.push('/daftar-data-update')
+        }
+      } catch (error) {
+        console.error('Error loading library data:', error)
         router.push('/daftar-data-update')
       }
     }

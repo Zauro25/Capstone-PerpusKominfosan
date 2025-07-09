@@ -6,6 +6,8 @@ import DaftarData from '../components/DaftarData.vue'
 import NotificationPage from '../components/NotificationPage.vue'
 import DetailPage from '../components/DetailPage.vue'
 import PengirimanDataPage from '../components/pengirimanDataPage.vue'
+import Profile from '../components/Profile.vue'
+import ProfileEdit from '../components/profileedit.vue'
 
 const routes = [
   { 
@@ -47,6 +49,15 @@ const routes = [
     component: PengirimanDataPage,
     meta: { requiresAuth: true } 
   },
+  {
+    path: '/profile',
+  component : Profile,
+  meta: { requiresAuth: true }
+  },
+  {
+  path: '/profile/edit',
+  component : ProfileEdit
+  }
 ]
 
 const router = createRouter({
