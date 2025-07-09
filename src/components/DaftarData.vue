@@ -100,7 +100,7 @@
                     <td data-label="Periode">{{ formatPeriode(library.periode) }}</td>
                     
                     <td data-label="Nama Perpustakaan">{{ library.nama_perpustakaan }}</td>
-                    <td data-label="Nama Kepala">{{ library.kepala_perpustakaan }}</td>
+                    <td data-label="Nama Kepala">{{ library.kepala_perpustakaan }}</td> 
                     <td data-label="Tahun Berdiri">{{ library.tahun_berdiri }}</td>
                   <td>
                     <div class="action-menu">
@@ -156,18 +156,24 @@ export default {
     const menuPosition = ref({ top: '0px', left: '0px' })
     const hasUnreadNotifications = ref(true)
     const isMobile = ref(false)
-    const libraries = ref([])
 
-    // Fetch data perpustakaan dari backend
-    const fetchLibraries = async () => {
+    // Fetch data perpustakaan saat komponen dimount
+    onMounted(async () => {
       try {
-        // Ambil langsung dari store agar reactive
         await libraryStore.fetchLibraries()
-        libraries.value = libraryStore.libraries
+        console.log('Total data:', libraryStore.libraries.length)
+        console.log('Data:', JSON.stringify(libraryStore.libraries, null, 2))
+
+        console.log('Loaded libraries:', libraryStore.libraries) // Debug log
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        document.addEventListener('click', handleClickOutside)
       } catch (error) {
-        console.error('Gagal mengambil data perpustakaan:', error)
+        console.error('Failed to fetch libraries:', error)
+        // Tampilkan pesan error ke user
+        alert('Gagal memuat data perpustakaan. Silakan coba lagi.')
       }
-    }
+    })
 
     // Format periode from "2024-1" to "Semester Ganjil 2024/2025"
     const formatPeriode = (periode) => {
@@ -180,56 +186,44 @@ export default {
       return `Semester ${jenisSemester} ${tahun}/${tahunAkhir}`
     }
 
-    const isLastRow = (id) => {
-      const index = libraryStore.libraries.findIndex(lib => lib.id === id);
-      return index === libraryStore.libraries.length - 1;
-    }
-
     const calculateMenuPosition = (event, id) => {
-      const button = event.currentTarget;
-      const rect = button.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const menuHeight = 144; // Approximate height of menu
+      const button = event.currentTarget
+      const rect = button.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      const menuHeight = 144 // Approximate height of menu
 
-      let top;
+      let top
       if (spaceBelow >= menuHeight || spaceBelow >= spaceAbove) {
-        top = rect.bottom + 5;
+        top = rect.bottom + 5
       } else {
-        top = rect.top - menuHeight - 5;
+        top = rect.top - menuHeight - 5
       }
 
       menuPosition.value = {
         top: `${top}px`,
         left: `${rect.left}px`
-      };
-    };
+      }
+    }
 
     const toggleMenu = (event, id) => {
       if (activeMenu.value === id) {
-        activeMenu.value = null;
+        activeMenu.value = null
       } else {
-        calculateMenuPosition(event, id);
-        activeMenu.value = id;
+        calculateMenuPosition(event, id)
+        activeMenu.value = id
       }
-    };
+    }
 
     const handleClickOutside = (event) => {
-      const clickedElement = event.target;
-      const isToggleButton = clickedElement.closest('.action-toggle');
-      const isDropdownMenu = clickedElement.closest('.dropdown-menu');
+      const clickedElement = event.target
+      const isToggleButton = clickedElement.closest('.action-toggle')
+      const isDropdownMenu = clickedElement.closest('.dropdown-menu')
       
       if (!isToggleButton && !isDropdownMenu) {
-        activeMenu.value = null;
+        activeMenu.value = null
       }
-    };
-
-    onMounted(() => {
-      fetchLibraries()
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
-    })
+    }
 
     const checkMobile = () => {
       isMobile.value = window.innerWidth <= 768
@@ -274,10 +268,10 @@ export default {
       if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
         try {
           await libraryStore.deleteLibrary(library.id)
-          await fetchLibraries() // refresh data setelah hapus
           activeMenu.value = null
         } catch (error) {
           console.error('Error deleting library:', error)
+          alert('Gagal menghapus data perpustakaan')
         }
       }
     }
@@ -290,7 +284,7 @@ export default {
     return {
       isSidebarOpen,
       hasUnreadNotifications,
-      libraries,
+      libraries: libraryStore.libraries, // Gunakan langsung dari store
       activeMenu,
       menuPosition,
       toggleSidebar,
@@ -303,7 +297,6 @@ export default {
       editLibrary,
       deleteLibrary,
       formatPeriode,
-      isLastRow,
       handleClickOutside
     }
   }

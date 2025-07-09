@@ -379,7 +379,7 @@ export default {
       this.$router.push(`/${route}`)
     },
     goToSettings() {
-      this.$router.push('/settings')
+      this.$router.push('/profile')
     },
     logout() {
       localStorage.removeItem('authToken')

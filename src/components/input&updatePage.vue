@@ -223,6 +223,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useLibraryStore } from '../store/libraryStore'
 import './styles/form.css'
 
@@ -230,6 +231,7 @@ export default {
   name: 'InputUpdatePage',
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const libraryStore = useLibraryStore()
     const isSidebarOpen = ref(false)
     const hasUnreadNotifications = ref(true)
@@ -268,10 +270,38 @@ export default {
       nomorIndukError.value = ''
     }
 
-    onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
+   onMounted(async () => {
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    document.addEventListener('click', handleClickOutside)
+
+    // Cek parameter edit dari URL
+      const editId = route.query.edit
+      if (editId) {
+        try {
+          const data = await libraryStore.getLibraryById(parseInt(editId))
+          if (data) {
+          // Mapping data dari store ke form
+            form.value = {
+              periode: data.periode,
+              namaPerpustakaan: data.nama_perpustakaan,
+              alamat: data.alamat,
+              kepalaPerpustakaan: data.kepala_perpustakaan,
+              jenisPerpustakaan: data.jenis_perpustakaan,
+              tahunBerdiri: data.tahun_berdiri,
+              nomorInduk: data.nomor_induk,
+              jumlahSDM: data.jumlah_sdm,
+              jumlahPengunjung: data.jumlah_pengunjung,
+              jumlahAnggota: data.jumlah_anggota
+            }
+            isEditing.value = true
+            editingId.value = parseInt(editId)
+          }
+        } catch (error) {
+            console.error('Error loading library data:', error)
+            router.push('/daftar-data-update')
+        }
+      }
     })
 
     const checkMobile = () => {
@@ -314,34 +344,50 @@ export default {
     }
 
     const handleSubmit = async () => {
-      // Validate nomor induk before submission
-      if (nomorIndukError.value) {
-        return
-      }
-      try {
-        if (isEditing.value) {
-          await libraryStore.updateLibrary(editingId.value, form.value)
-        } else {
-          await libraryStore.addLibrary(form.value)
-        }
-        // Redirect to daftar data page after successful submission
-        router.push('/daftar-data-update')
-      } catch (error) {
-        if (error.response && error.response.data && error.response.data.error) {
-          alert('Gagal input data: ' + error.response.data.error)
-        } else {
-          alert('Gagal input data. Silakan coba lagi.')
-        }
-        console.error('Error saving data:', error)
-      }
+  if (nomorIndukError.value) return
+
+  try {
+    if (isEditing.value) {
+
+      await libraryStore.updateLibrary(editingId.value, {
+        periode: form.value.periode,
+        nama_perpustakaan: form.value.namaPerpustakaan,
+        alamat: form.value.alamat,
+        kepala_perpustakaan: form.value.kepalaPerpustakaan,
+        jenis_perpustakaan: form.value.jenisPerpustakaan,
+        tahun_berdiri: form.value.tahunBerdiri,
+        nomor_induk: form.value.nomorInduk,
+        jumlah_sdm: form.value.jumlahSDM,
+        jumlah_pengunjung: form.value.jumlahPengunjung,
+        jumlah_anggota: form.value.jumlahAnggota
+      })
+    } else {
+      await libraryStore.addLibrary({
+        periode: form.value.periode,
+        nama_perpustakaan: form.value.namaPerpustakaan,
+        alamat: form.value.alamat,
+        kepala_perpustakaan: form.value.kepalaPerpustakaan,
+        jenis_perpustakaan: form.value.jenisPerpustakaan,
+        tahun_berdiri: form.value.tahunBerdiri,
+        nomor_induk: form.value.nomorInduk,
+        jumlah_sdm: form.value.jumlahSDM,
+        jumlah_pengunjung: form.value.jumlahPengunjung,
+        jumlah_anggota: form.value.jumlahAnggota
+      })
     }
+    router.push('/daftar-data-update')
+  } catch (error) {
+    console.error('Error saving data:', error)
+    alert(error.response?.data?.error || 'Gagal menyimpan data')
+  }
+} 
 
     const handleCancel = () => {
       // Reset form to initial state
       form.value = {
         periode: '',
         nomorInduk: '',
-        nama: '',
+        namaPerpustakaan: '',
         kepalaPerpustakaan: '',
         tahunBerdiri: '',
         alamat: '',
@@ -355,16 +401,6 @@ export default {
     }
 
     // Check if we're editing an existing entry
-    const editId = router.currentRoute.value.query.edit
-    if (editId) {
-      const data = libraryStore.getLibraryById(parseInt(editId))
-      if (data) {
-        form.value = { ...data }
-        isEditing.value = true
-        editingId.value = parseInt(editId)
-      }
-    }
-
     return {
       isSidebarOpen,
       hasUnreadNotifications,
