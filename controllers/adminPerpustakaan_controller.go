@@ -93,10 +93,10 @@ func GetPerpustakaanByID(c *gin.Context) {
     }
 
     // Pastikan ID yang diminta sama dengan perpustakaan yang dikelola admin
-   // if adminPerpus.PerpustakaanID != uint(id) {
-     //   c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki akses ke data ini"})
-       // return
-    //}
+   //if adminPerpus.PerpustakaanID != uint(id) {
+     // c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki akses ke data ini"})
+    //return
+   //}
 
     var perpustakaan models.Perpustakaan
     if err := config.DB.Preload("AdminPerpustakaan").
@@ -218,13 +218,7 @@ func SendDataToDPK(c *gin.Context) {
         })
         return
     }
-    
-    if req.PerpustakaanID != perpustakaanID {
-        c.JSON(http.StatusForbidden, gin.H{
-            "error": "Anda tidak memiliki akses ke perpustakaan ini",
-        })
-        return
-    }
+
     
     // Check if data is complete
     var perpustakaan models.Perpustakaan
@@ -267,7 +261,6 @@ func SendDataToDPK(c *gin.Context) {
     updates := map[string]interface{}{
         "status_verifikasi": "Terkirim",
         "tanggal_kirim":     now,
-        "catatan_revisi":    req.CatatanKirim,
     }
     
     if err := tx.Model(&models.Perpustakaan{}).
@@ -285,7 +278,6 @@ func SendDataToDPK(c *gin.Context) {
         PerpustakaanID:    perpustakaanID,
         JenisData:        "Perpustakaan",
         Status:           "Pending",
-        CatatanRevisi:    req.CatatanKirim,
         TanggalVerifikasi: &now,
     }
     

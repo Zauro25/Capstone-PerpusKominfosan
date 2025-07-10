@@ -8,11 +8,13 @@ import DetailPage from '../components/DetailPage.vue'
 import PengirimanDataPage from '../components/pengirimanDataPage.vue'
 import Profile from '../components/Profile.vue'
 import ProfileEdit from '../components/profileedit.vue'
+import LandingPage from '../components/landingPage.vue'
 
 const routes = [
   { 
     path: '/', 
-    redirect: '/login' 
+    redirect: '/landing',
+    component: LandingPage,
   },
   { 
     path: '/login', 

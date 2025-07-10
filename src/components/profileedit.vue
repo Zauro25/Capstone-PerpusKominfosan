@@ -163,7 +163,10 @@ export default {
           router.push('/profile')
         }
     }
-      router.push('/profile/edit')
+      router.push('/profile')
+    }
+    const cancel = (route) => {
+      router.push('/profile')
     }
 
     const navigateTo = (route) => {
@@ -212,6 +215,7 @@ export default {
       hasUnreadNotifications,
       toggleSidebar,
       perbarui,
+      cancel,
       navigateTo,
       dashboard,
       goToSettings,

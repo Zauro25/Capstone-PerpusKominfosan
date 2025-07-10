@@ -221,7 +221,6 @@ type UpdatePasswordRequest struct {
 
 type SendDataRequest struct {
 	PerpustakaanID uint   `json:"perpustakaan_id" binding:"required"`
-	CatatanKirim   string `json:"catatan_kirim"`
 }
 
 type VerifikasiRequest struct {

@@ -101,10 +101,11 @@
                     <td>
                       <span 
                         class="status-badge"
-                        :class="{ 'sent': item.status === 'Sudah Dikirim' }"
+                        :class="{ 'sent': item.status_verifikasi === 'Terkirim' }"
                       >
-                        {{ item.status || 'Belum Dikirim' }}
+                        {{ item.status_verifikasi === 'Terkirim' ? 'Sudah Dikirim' : 'Belum Dikirim' }}
                       </span>
+
                     </td>
                   </tr>
                 </tbody>
@@ -177,15 +178,20 @@ export default {
     const sendData = async () => {
       try {
         const selectedData = libraryDataByPeriod.value.filter((_, index) => selectedItems.value[index])
-        
-        // Here you would typically send the data to your backend
-        // For now, we'll just mark them as sent in the store
+
         for (const data of selectedData) {
           await libraryStore.sendDataToDPK(data.id)
+
+          // ✅ Update langsung data di state Pinia biar tampilan berubah
+          const indexInStore = libraryStore.libraries.findIndex(lib => lib.id === data.id)
+          if (indexInStore !== -1) {
+            libraryStore.libraries[indexInStore].status_verifikasi = 'Terkirim'
+            libraryStore.libraries[indexInStore].tanggal_kirim = new Date().toISOString()
+          }
+
+          selectedItems.value[libraryDataByPeriod.value.indexOf(data)] = false
         }
 
-
-        // Clear selections
         selectedItems.value = {}
         alert('Data berhasil dikirim!')
       } catch (error) {
@@ -193,6 +199,7 @@ export default {
         alert('Gagal mengirim data. Silakan coba lagi.')
       }
     }
+
 
     // Cancel selection
     const cancelSelection = () => {
@@ -251,6 +258,7 @@ export default {
     return {
       selectedItems,
       isSidebarOpen,
+      libraries: libraryStore.libraries,
       hasUnreadNotifications,
       libraryDataByPeriod,
       hasSelectedItems,

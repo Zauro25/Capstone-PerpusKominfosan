@@ -104,14 +104,18 @@
       }
     }
     const sendDataToDPK = async (id) => {
-      const payload = {
-        perpustakaan_id: id,
-        catatan_kirim: '' // Bisa dikosongkan atau nanti dikasih catatan manual
+      try{
+        const payload = {
+        perpustakaan_id: id,// Bisa dikosongkan atau nanti dikasih catatan manual
       }
-
       const response = await api.post(`/admin-perpustakaan/data/${id}/send-data`, payload)
       await fetchLibraries()
       return response.data
+      }
+      catch (error) {
+        console.error('Error sending data to DPK:', error)
+        throw error
+      }
     }
 
     // Fungsi untuk mengatur data perpustakaan yang sedang aktif
@@ -122,6 +126,7 @@
     return {
       libraries,
       currentLibrary,
+      sendDataToDPK,
       addLibrary,
       getLibraryById,
       updateLibrary,
