@@ -249,39 +249,67 @@ func ChangePassword(c *gin.Context) {
 }
 
 func GetProfile(c *gin.Context) {
-	userID := c.GetUint("user_id")
-	userType := c.GetString("user_type")
+    userID := c.GetUint("user_id")
+    userType := c.GetString("user_type")
 
-	var user interface{}
-	var err error
+    var response gin.H
 
-	switch userType {
-	case "admin_perpustakaan":
-		var adminPerpus models.AdminPerpustakaan
-		err = config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error
-		user = adminPerpus
+    switch userType {
+    case "admin_perpustakaan":
+        var adminPerpus models.AdminPerpustakaan
+        if err := config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error; err != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+            return
+        }
+        response = gin.H{
+            "id": adminPerpus.ID,
+            "username": adminPerpus.Username,
+            "nama_lengkap": adminPerpus.NamaLengkap,
+            "email": adminPerpus.Email,
+            "no_telepon": adminPerpus.NoTelepon,
+			"user_type": "admin_perpustakaan",
+            "perpustakaan": gin.H{
+                "id": adminPerpus.Perpustakaan.ID,
+                "nama_perpustakaan": adminPerpus.Perpustakaan.NamaPerpustakaan,
+                "alamat": adminPerpus.Perpustakaan.Alamat,
+                "jenis_perpustakaan": adminPerpus.Perpustakaan.JenisPerpustakaan,
+            },
+        }
 
-	case "admin_dpk":
-		var adminDPK models.AdminDPK
-		err = config.DB.First(&adminDPK, userID).Error
-		user = adminDPK
+    case "admin_dpk":
+        var adminDPK models.AdminDPK
+        if err := config.DB.First(&adminDPK, userID).Error; err != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+            return
+        }
+        response = gin.H{
+            "id": adminDPK.ID,
+            "username": adminDPK.Username,
+            "nama_lengkap": adminDPK.NamaLengkap,
+            "email": adminDPK.Email,
+            "no_telepon": adminDPK.NoTelepon,
+        }
 
-	case "executive":
-		var executive models.Executive
-		err = config.DB.First(&executive, userID).Error
-		user = executive
+    case "executive":
+        var executive models.Executive
+        if err := config.DB.First(&executive, userID).Error; err != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+            return
+        }
+        response = gin.H{
+            "id": executive.ID,
+            "username": executive.Username,
+            "nama_lengkap": executive.NamaLengkap,
+            "email": executive.Email,
+            "no_telepon": executive.NoTelepon,
+        }
 
-	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tipe user tidak valid"})
-		return
-	}
+    default:
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Tipe user tidak valid"})
+        return
+    }
 
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
-		return
-	}
-
-	c.JSON(http.StatusOK, user)
+    c.JSON(http.StatusOK, response)
 }
 
 func UpdateProfile(c *gin.Context) {

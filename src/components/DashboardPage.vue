@@ -379,7 +379,7 @@ export default {
       this.$router.push(`/${route}`)
     },
     goToSettings() {
-      this.$router.push('/settings')
+      this.$router.push('/profile')
     },
     logout() {
       localStorage.removeItem('authToken')
@@ -609,13 +609,17 @@ html, body {
   margin-top: 70px;
 }
 
-.dashboard-content h2 {
-  margin: 0;
-  padding: 1rem 0;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 1.25rem;
+.sub-header {
+  background-color: #0E2954;
+  padding: 1rem 2rem;
+  margin: -2rem -2rem 2rem -2rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #0E2954;
+  margin-bottom: 1.5rem;
 }
 
 .semester-selector {
@@ -857,37 +861,40 @@ html, body {
 /* Hamburger Menu Styles */
 .hamburger-menu {
   display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 20px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
-  z-index: 1001;
+  padding: 0;
+  margin-right: 1rem;
 }
 
 .hamburger-menu span {
   display: block;
-  width: 25px;
-  height: 3px;
+  width: 100%;
+  height: 2px;
   background-color: white;
-  margin: 5px 0;
   transition: all 0.3s ease;
 }
 
-.hamburger-menu.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+.hamburger-menu.active span:first-child {
+  transform: translateY(9px) rotate(45deg);
 }
 
 .hamburger-menu.active span:nth-child(2) {
   opacity: 0;
 }
 
-.hamburger-menu.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
+.hamburger-menu.active span:last-child {
+  transform: translateY(-9px) rotate(-45deg);
 }
 
 @media screen and (max-width: 768px) {
   .hamburger-menu {
-    display: block;
+    display: flex;
   }
   
   .header {
@@ -916,4 +923,134 @@ html, body {
 }
 
 /* Rest of your existing styles */
+.dashboard-content {
+  padding: 2rem;
+  background-color: #F3F4F6;
+  min-height: calc(100vh - 70px);
+  margin-top: 70px;
+  margin-left: 250px;
+}
+
+.filter-section {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.semester-select,
+.library-select {
+  padding: 0.75rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.375rem;
+  background-color: white;
+  min-width: 250px;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.semester-select:focus,
+.library-select:focus {
+  outline: none;
+  border-color: #0E2954;
+  box-shadow: 0 0 0 2px rgba(14, 41, 84, 0.1);
+}
+
+.stats-section {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.chart-container {
+  height: 300px;
+  margin-top: 1rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card h3 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.chart-card canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.summary-card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-wrapper img {
+  width: 48px;
+  height: 48px;
+}
+
+.summary-info h4 {
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.summary-info p {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1E40AF;
+}
+
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+  }
+}
 </style>

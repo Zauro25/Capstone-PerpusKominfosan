@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/Zauro25/Capstone-PerpusKominfosan/config"
 	"github.com/Zauro25/Capstone-PerpusKominfosan/models"
@@ -57,29 +56,61 @@ func GetDashboardPerpustakaan(c *gin.Context) {
 }
 
 func GetDataPerpustakaan(c *gin.Context) {
-	userID := c.GetUint("user_id")
-	
-	var adminPerpus models.AdminPerpustakaan
-	if err := config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Admin perpustakaan tidak ditemukan"})
-		return
-	}
-	
-	perpustakaanID := adminPerpus.PerpustakaanID
-	
-	var perpustakaan models.Perpustakaan
-	if err := config.DB.Preload("Koleksi").
-		Preload("SDM").
-		Preload("Pengunjung").
-		Preload("Anggota").
-		First(&perpustakaan, perpustakaanID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Data perpustakaan tidak ditemukan"})
-		return
-	}
-	
-	c.JSON(http.StatusOK, perpustakaan)
+    userID := c.GetUint("user_id")
+    
+    var adminPerpus models.AdminPerpustakaan
+    if err := config.DB.First(&adminPerpus, userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Admin perpustakaan tidak ditemukan"})
+        return
+    }
+    
+    var perpustakaans []models.Perpustakaan
+    if err := config.DB.Where("created_by = ?", userID). // Pastikan ambil semua data user ini
+        Order("created_at DESC"). // Urutkan dari yang terbaru
+        Find(&perpustakaans).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data perpustakaan"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, perpustakaans)
 }
 
+func GetPerpustakaanByID(c *gin.Context) {
+    // Dapatkan ID dari parameter URL
+    id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
+        return
+    }
+
+    userID := c.GetUint("user_id")
+    
+    // Verifikasi bahwa admin perpustakaan memiliki akses ke data ini
+    var adminPerpus models.AdminPerpustakaan
+    if err := config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Admin perpustakaan tidak ditemukan"})
+        return
+    }
+
+    // Pastikan ID yang diminta sama dengan perpustakaan yang dikelola admin
+   //if adminPerpus.PerpustakaanID != uint(id) {
+     // c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki akses ke data ini"})
+    //return
+   //}
+
+    var perpustakaan models.Perpustakaan
+    if err := config.DB.Preload("AdminPerpustakaan").
+        Preload("Koleksi").
+        Preload("SDM").
+        Preload("Pengunjung").
+        Preload("Anggota").
+        First(&perpustakaan, id).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Data perpustakaan tidak ditemukan"})
+        return
+    }
+
+    c.JSON(http.StatusOK, perpustakaan)
+}
 func UpdateDataPerpustakaan(c *gin.Context) {
 	userID := c.GetUint("user_id")
 	
@@ -99,14 +130,17 @@ func UpdateDataPerpustakaan(c *gin.Context) {
 	
 	// Update only allowed fields
 	updateData := map[string]interface{}{
-		"nama_perpustakaan": req.NamaPerpustakaan,
-		"alamat":            req.Alamat,
-		"jenis_perpustakaan": req.JenisPerpustakaan,
-		"nomor_induk":       req.NomorInduk,
-		"JumlahSDM":       req.JumlahSDM,
-		"jumlahPengunjung": req.JumlahPengunjung,
-		"JumlahAnggota":    req.JumlahAnggota,
-	}
+        "periode":             req.Periode,
+        "nama_perpustakaan":   req.NamaPerpustakaan,
+        "alamat":              req.Alamat,
+        "kepala_perpustakaan": req.KepalaPerpustakaan,
+        "jenis_perpustakaan":  req.JenisPerpustakaan,
+        "tahun_berdiri":       req.TahunBerdiri,
+        "nomor_induk":         req.NomorInduk,
+        "jumlah_sdm":          req.JumlahSDM,
+        "jumlah_pengunjung":   req.JumlahPengunjung,
+        "jumlah_anggota":      req.JumlahAnggota,
+    }
 	
 	if err := config.DB.Model(&models.Perpustakaan{}).Where("id = ?", perpustakaanID).Updates(updateData).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui data perpustakaan"})
@@ -129,6 +163,40 @@ func UpdateDataPerpustakaan(c *gin.Context) {
 	
 	c.JSON(http.StatusOK, gin.H{"message": "Data perpustakaan berhasil diperbarui"})
 }
+func DeleteDataPerpustakaan(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var adminPerpus models.AdminPerpustakaan
+	if err := config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Admin perpustakaan tidak ditemukan"})
+		return
+	}
+
+	perpustakaanID := adminPerpus.PerpustakaanID
+
+	// Hapus data perpustakaan
+	if err := config.DB.Delete(&models.Perpustakaan{}, perpustakaanID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus data perpustakaan"})
+		return
+	}
+
+	// Buat audit log
+	auditLog := models.AuditLog{
+		UserType:  "admin_perpustakaan",
+		UserID:    userID,
+		Action:    "DELETE_PERPUSTAKAAN",
+		TableName: "perpustakaan",
+		RecordID:  perpustakaanID,
+		NewValues: "-", // karena datanya dihapus
+		IPAddress: c.ClientIP(),
+		UserAgent: c.GetHeader("User-Agent"),
+		Timestamp: time.Now(),
+	}
+	config.DB.Create(&auditLog)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Data perpustakaan berhasil dihapus"})
+}
+
 
 func SendDataToDPK(c *gin.Context) {
     userID := c.GetUint("user_id")
@@ -150,13 +218,7 @@ func SendDataToDPK(c *gin.Context) {
         })
         return
     }
-    
-    if req.PerpustakaanID != perpustakaanID {
-        c.JSON(http.StatusForbidden, gin.H{
-            "error": "Anda tidak memiliki akses ke perpustakaan ini",
-        })
-        return
-    }
+
     
     // Check if data is complete
     var perpustakaan models.Perpustakaan
@@ -199,7 +261,6 @@ func SendDataToDPK(c *gin.Context) {
     updates := map[string]interface{}{
         "status_verifikasi": "Terkirim",
         "tanggal_kirim":     now,
-        "catatan_revisi":    req.CatatanKirim,
     }
     
     if err := tx.Model(&models.Perpustakaan{}).
@@ -217,7 +278,6 @@ func SendDataToDPK(c *gin.Context) {
         PerpustakaanID:    perpustakaanID,
         JenisData:        "Perpustakaan",
         Status:           "Pending",
-        CatatanRevisi:    req.CatatanKirim,
         TanggalVerifikasi: &now,
     }
     
@@ -322,9 +382,9 @@ func GetHistoryPengiriman(c *gin.Context) {
 }
 func InputDataPerpustakaan(c *gin.Context) {
     userID := c.GetUint("user_id")
-    // Get admin data with preloaded perpustakaan
+    
     var adminPerpus models.AdminPerpustakaan
-    if err := config.DB.Preload("Perpustakaan").First(&adminPerpus, userID).Error; err != nil {
+    if err := config.DB.First(&adminPerpus, userID).Error; err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Admin perpustakaan tidak ditemukan"})
         return
     }
@@ -335,34 +395,35 @@ func InputDataPerpustakaan(c *gin.Context) {
         return
     }
 
-    // Start transaction
+    // Buat data perpustakaan BARU
+    perpustakaan := models.Perpustakaan{
+        Periode:           req.Periode,
+        NamaPerpustakaan:  req.NamaPerpustakaan,
+        Alamat:           req.Alamat,
+        KepalaPerpustakaan: req.KepalaPerpustakaan,
+        JenisPerpustakaan: req.JenisPerpustakaan,
+        TahunBerdiri:     req.TahunBerdiri,
+        NomorInduk:       req.NomorInduk,
+        JumlahSDM:        req.JumlahSDM,
+        JumlahPengunjung: req.JumlahPengunjung,
+        JumlahAnggota:    req.JumlahAnggota,
+        StatusVerifikasi: "Draft",
+        CreatedBy:       userID,
+    }
+
     tx := config.DB.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan internal"})
-        }
-    }()
-
-    // Update perpustakaan data sesuai models.Perpustakaan
-    perpustakaan := adminPerpus.Perpustakaan
-    perpustakaan.Periode = req.Periode
-    perpustakaan.NamaPerpustakaan = req.NamaPerpustakaan
-    perpustakaan.Alamat = req.Alamat
-    perpustakaan.KepalaPerpustakaan = req.KepalaPerpustakaan
-    perpustakaan.JenisPerpustakaan = req.JenisPerpustakaan
-    perpustakaan.TahunBerdiri = req.TahunBerdiri
-    perpustakaan.NomorInduk = req.NomorInduk
-    perpustakaan.JumlahSDM = req.JumlahSDM
-    perpustakaan.JumlahPengunjung = req.JumlahPengunjung
-    perpustakaan.JumlahAnggota = req.JumlahAnggota
-    perpustakaan.StatusVerifikasi = "Draft"
-    perpustakaan.TanggalKirim = nil
-    perpustakaan.CatatanRevisi = ""
-
-    if err := tx.Save(&perpustakaan).Error; err != nil {
+    
+    if err := tx.Create(&perpustakaan).Error; err != nil {
         tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data perpustakaan"})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat data perpustakaan"})
+        return
+    }
+
+    // Update relasi admin ke perpustakaan ini (jika perlu)
+    adminPerpus.PerpustakaanID = perpustakaan.ID
+    if err := tx.Save(&adminPerpus).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengupdate admin perpustakaan"})
         return
     }
 
@@ -406,8 +467,8 @@ func InputDataPerpustakaan(c *gin.Context) {
 
     // Preload admin data for response
     if err := config.DB.Preload("AdminPerpustakaan").First(&perpustakaan, perpustakaan.ID).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memuat data perpustakaan"})
-        return
+        tx.Commit()
+        c.JSON(http.StatusOK, gin.H{"message": "Data perpustakaan berhasil dibuat", "data": perpustakaan})
     }
 
     // Format response
