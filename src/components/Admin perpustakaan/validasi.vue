@@ -91,14 +91,13 @@
                       class="status-badge"
                       :class="{
                         'status-not-sent': library.status === 'Belum Dikirim' || !library.status,
-                        'status-sent': library.status === 'Sudah Dikirim',
-                        'status-waiting': library.status === 'Menunggu',
+                        'status-waiting': library.status === 'Sudah Dikirim' || library.status === 'Menunggu',
                         'status-revision': library.status === 'Revisi',
                         'status-valid': library.status === 'Valid',
                         'status-revised': library.status === 'Telah Direvisi'
                       }"
                     >
-                      {{ library.status || 'Belum Dikirim' }}
+                      {{ library.status === 'Sudah Dikirim' ? 'Menunggu' : (library.status || 'Belum Dikirim') }}
                     </span>
                   </td>
                   <td>
@@ -199,6 +198,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLibraryStore } from '../../store/libraryStore.js'
+import { useSubmissionStore } from '../../store/submissionStore.js' // Added import for submissionStore
 import Header from './Header.vue'
 
 export default {
@@ -209,6 +209,7 @@ export default {
   setup() {
     const router = useRouter()
     const libraryStore = useLibraryStore()
+    const submissionStore = useSubmissionStore() // Added submissionStore
     const isSidebarOpen = ref(false)
     const showRevisionForm = ref(false)
     const selectedLibrary = ref(null)
@@ -249,7 +250,20 @@ export default {
     }
 
     const goToSettings = () => {
-      router.push('/profile')
+      const userType = localStorage.getItem('userType') || sessionStorage.getItem('userType')
+      switch(userType) {
+        case 'admin_perpustakaan':
+          router.push('/profile')
+          break
+        case 'executive':
+          router.push('/profile-executive')
+          break
+        case 'admin_dpk':
+          router.push('/profile-dpk')
+          break
+        default:
+          router.push('/profile')
+      }
     }
 
     const logout = () => {
@@ -298,27 +312,36 @@ export default {
 
     const submitRevision = () => {
       if (selectedLibrary.value) {
+        // Create updated data object
         const updatedData = {
           ...selectedLibrary.value,
           ...revisionData.value,
           status: 'Telah Direvisi'
         }
+        
+        // Update in library store
         libraryStore.updateLibrary(selectedLibrary.value.id, updatedData)
-      }
-      showRevisionForm.value = false
-      selectedLibrary.value = null
-      // Reset form data
-      revisionData.value = {
-        periode: '',
-        nomorInduk: '',
-        nama: '',
-        kepalaPerpustakaan: '',
-        tahunBerdiri: '',
-        alamat: '',
-        jenis: '',
-        jumlahSdm: '',
-        jumlahPengunjung: '',
-        anggotaAktif: ''
+        
+        // Also update in submission store if needed
+        submissionStore.updateStatus(selectedLibrary.value.periode, 'Telah Direvisi')
+        
+        // Close form and reset
+        showRevisionForm.value = false
+        selectedLibrary.value = null
+        
+        // Reset form data
+        revisionData.value = {
+          periode: '',
+          nomorInduk: '',
+          nama: '',
+          kepalaPerpustakaan: '',
+          tahunBerdiri: '',
+          alamat: '',
+          jenis: '',
+          jumlahSdm: '',
+          jumlahPengunjung: '',
+          anggotaAktif: ''
+        }
       }
     }
 
@@ -869,11 +892,6 @@ tr:last-child td {
 .status-not-sent {
   background-color: #f3f4f6;
   color: #4b5563;
-}
-
-.status-sent {
-  background-color: #dcfce7;
-  color: #16a34a;
 }
 
 .status-waiting {

@@ -120,8 +120,15 @@ export default {
         // Mock login - replace with actual API call
         await new Promise(resolve => setTimeout(resolve, 1000))
         
-        // Simulate user role check (replace with actual role check from API)
-        const userRole = this.form.username.includes('executive') ? 'executive' : 'admin_perpustakaan'
+        // Determine user role based on email (replace with actual role check from API)
+        let userRole
+        if (this.form.username.includes('executive')) {
+          userRole = 'executive'
+        } else if (this.form.username.includes('dpk')) {
+          userRole = 'admin_dpk'
+        } else {
+          userRole = 'admin_perpustakaan'
+        }
         
         if (this.form.rememberMe) {
           localStorage.setItem('authToken', 'mock-token')
@@ -134,10 +141,15 @@ export default {
         }
 
         // Redirect based on user role
-        if (userRole === 'executive') {
-          this.$router.push('/dashboard-executive')
-        } else {
-          this.$router.push('/dashboard')
+        switch (userRole) {
+          case 'executive':
+            this.$router.push('/dashboard-executive')
+            break
+          case 'admin_dpk':
+            this.$router.push('/dashboard-dpk')
+            break
+          default:
+            this.$router.push('/dashboard')
         }
       } catch (error) {
         console.error('Login failed', error)

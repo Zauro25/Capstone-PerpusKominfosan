@@ -114,7 +114,7 @@
         <div class="summary-cards">
           <div class="summary-card">
             <div class="icon-wrapper">
-              <img src="../assets/total perpustakaan.png" alt="Library Icon">
+              <img src="../../assets/total perpustakaan.png" alt="Library Icon">
             </div>
             <div class="summary-info">
               <h4>Total Perpustakaan</h4>
@@ -123,7 +123,7 @@
           </div>
           <div class="summary-card">
             <div class="icon-wrapper">
-              <img src="../assets/total sdm.png" alt="Staff Icon">
+              <img src="../../assets/total sdm.png" alt="Staff Icon">
             </div>
             <div class="summary-info">
               <h4>Total SDM</h4>
@@ -173,7 +173,20 @@ export default {
     }
 
     const goToSettings = () => {
-      router.push('/profile')
+      const userType = localStorage.getItem('userType') || sessionStorage.getItem('userType')
+      switch(userType) {
+        case 'admin_perpustakaan':
+          router.push('/profile')
+          break
+        case 'executive':
+          router.push('/profile-executive')
+          break
+        case 'admin_dpk':
+          router.push('/profile-dpk')
+          break
+        default:
+          router.push('/profile')
+      }
     }
 
     const logout = () => {

@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useSubmissionStore } from './submissionStore'
 
 export const useLibraryStore = defineStore('library', () => {
   const libraries = ref([])
   const currentLibrary = ref(null)
+  const submissionStore = useSubmissionStore()
 
   // Fungsi untuk menyimpan data ke localStorage
   const saveToLocalStorage = () => {
@@ -38,10 +40,17 @@ export const useLibraryStore = defineStore('library', () => {
   const updateLibrary = (id, updatedData) => {
     const index = libraries.value.findIndex(lib => lib.id === id)
     if (index !== -1) {
+      // Update library data
       libraries.value[index] = {
         ...libraries.value[index],
         ...updatedData
       }
+
+      // Sync with submission store if status is updated
+      if (updatedData.status) {
+        submissionStore.updateStatus(libraries.value[index].periode, updatedData.status)
+      }
+
       saveToLocalStorage() // Simpan ke localStorage setelah update
       return libraries.value[index]
     }

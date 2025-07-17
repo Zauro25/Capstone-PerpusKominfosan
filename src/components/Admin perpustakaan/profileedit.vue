@@ -187,7 +187,6 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
 * {
@@ -289,7 +288,15 @@ html, body {
 
 /* Profile Content Styles */
 .profile-content {
+  flex: 1;
+  margin-left: 250px;
   padding: 2rem;
+  overflow-y: auto;
+  width: calc(100% - 250px);
+  height: calc(100vh - 70px);
+  display: flex;
+  justify-content: center; /* untuk center secara horizontal */
+  align-items: flex-start; /* align content to top */
 }
 
 .profile-card {
@@ -298,6 +305,7 @@ html, body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   max-width: 800px;
+  height: auto; /* ensure card takes needed height */
 }
 
 .profile-header {
@@ -509,7 +517,7 @@ html, body {
 }
 
 .nav-btn.active {
-  background-color: #4318FF;
+  background-color: #0E2954;
 }
 
 .nav-btn i {

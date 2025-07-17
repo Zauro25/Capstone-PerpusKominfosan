@@ -38,7 +38,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" :class="{ 'active': isSidebarOpen }">
           <nav class="sidebar-menu">
-            <button class="nav-btn active" @click="dashboard">
+            <button class="nav-btn " @click="dashboard">
               <span>Dashboard</span>
             </button>
             <button class="nav-btn" @click="navigateTo('input-update')">
@@ -497,7 +497,7 @@
   }
   
   .nav-btn.active {
-    background-color: #4318FF;
+    background-color: #0E2954;
   }
   
   .nav-btn i {

@@ -17,7 +17,7 @@
         </div>
         <div class="header-right">
           <div class="profile-btn" @click="goToSettings">
-            <span>Executive</span>
+            <span>Admin DPK</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -31,11 +31,14 @@
         <!-- Sidebar -->
         <aside class="sidebar" :class="{ 'active': isSidebarOpen }">
           <nav class="sidebar-menu">
-            <router-link to="/dashboard-executive" class="nav-btn">
+            <router-link to="/dashboard-dpk" class="nav-btn">
               <span>Dashboard</span>
             </router-link>
-            <router-link to="/profile-executive" class="nav-btn active">
-              <span>Pengaturan akun</span>
+            <router-link to="/verifikasi-data" class="nav-btn">
+              <span>Verifikasi Data</span>
+            </router-link>
+            <router-link to="/laporan" class="nav-btn">
+              <span>Laporan</span>
             </router-link>
           </nav>
           <button class="sidebar-logout-btn" @click="logout">
@@ -96,7 +99,7 @@
   import { useRouter } from 'vue-router'
   
   export default {
-    name: 'Profile',
+    name: 'ProfileDpk',
     setup() {
       const router = useRouter()
       const profileStore = useProfileStore()
@@ -108,7 +111,7 @@
       }
   
       const handleEditProfile = () => {
-        router.push('/profile/edit')
+        router.push('/profile-dpk/edit')
       }
   
       const navigateTo = (route) => {
@@ -116,11 +119,11 @@
       }
   
       const dashboard = () => {
-        router.push('/dashboard')
+        router.push('/dashboard-dpk')
       }
   
       const goToSettings = () => {
-        router.push('/profile')
+        router.push('/profile-dpk')
       }
   
       const logout = () => {
@@ -136,7 +139,7 @@
         const userType = localStorage.getItem('userType') || sessionStorage.getItem('userType')
         console.log('userProfile value:', profileStore.userProfile)
   
-        if (!token || userType !== 'admin_perpustakaan') {
+        if (!token || userType !== 'admin_dpk') {
           return router.push('/login')
         }
   

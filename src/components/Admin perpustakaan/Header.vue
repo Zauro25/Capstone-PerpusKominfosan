@@ -14,14 +14,14 @@
       <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
     </div>
     <div class="header-right">
-      <div class="notification-btn">
+      <div class="notification-btn" @click="$emit('notification-click')">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <div class="notification-dot"></div>
+        <div class="notification-dot" v-if="hasNotifications"></div>
       </div>
-      <div class="admin-profile">
+      <div class="admin-profile" @click="$emit('profile-click')">
         <span>Admin Perpustakaan</span>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -39,9 +39,13 @@ export default {
     isSidebarOpen: {
       type: Boolean,
       required: true
+    },
+    hasNotifications: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['toggle-sidebar']
+  emits: ['toggle-sidebar', 'notification-click', 'profile-click']
 }
 </script>
 
@@ -151,31 +155,9 @@ export default {
   opacity: 0.8;
 }
 
-.admin-profile span {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: white;
-}
-
 @media (max-width: 768px) {
   .hamburger-menu {
     display: block;
-  }
-
-  .header {
-    padding: 0.75rem 1rem;
-  }
-
-  .header-left h1 {
-    font-size: 0.9rem;
-  }
-
-  .admin-profile span {
-    display: none;
-  }
-
-  .header-right {
-    gap: 1rem;
   }
 }
 </style> 

@@ -5,7 +5,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
+  color-scheme: white;
   color: rgba(255, 255, 255, 0.87);
   background-color: #ffffff;
 
@@ -127,7 +127,7 @@ button:focus-visible {
 input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  border: 2px solid #333;
+  border: 2px solid white;
   border-radius: 4px;
   cursor: pointer;
   appearance: none;
@@ -141,13 +141,13 @@ input[type="checkbox"] {
 
 input[type="checkbox"]:checked {
   background-color: white;
-  border-color: #333;
+  border-color: white;
 }
 
 input[type="checkbox"]:checked::before {
   content: "✓";
   position: absolute;
-  color: #333;
+  color: white;
   font-size: 16px;
   font-weight: 900;
   left: 2px;
@@ -160,7 +160,7 @@ input[type="checkbox"]:checked::before {
 }
 
 input[type="checkbox"]:hover {
-  border-color: #333;
+  border-color: white;
 }
 
 input[type="checkbox"]:disabled {

@@ -180,11 +180,21 @@ export default {
       try {
         const selectedData = libraryDataByPeriod.value.filter((_, index) => selectedItems.value[index])
         
-        // Here you would typically send the data to your backend
-        // For now, we'll just mark them as sent in the store
+        // Update both library and submission stores
         selectedData.forEach(data => {
+          // Update library store
           libraryStore.updateLibrary(data.id, {
             ...data,
+            status: 'Sudah Dikirim'
+          })
+
+          // Update submission store
+          submissionStore.submitData({
+            id: data.id,
+            periode: data.periode,
+            nama: data.nama,
+            kepalaPerpustakaan: data.kepalaPerpustakaan,
+            tahunBerdiri: data.tahunBerdiri,
             status: 'Sudah Dikirim'
           })
         })
@@ -240,7 +250,20 @@ export default {
     }
 
     const goToSettings = () => {
-      router.push('/profile')
+      const userType = localStorage.getItem('userType') || sessionStorage.getItem('userType')
+      switch(userType) {
+        case 'admin_perpustakaan':
+          router.push('/profile')
+          break
+        case 'executive':
+          router.push('/profile-executive')
+          break
+        case 'admin_dpk':
+          router.push('/profile-dpk')
+          break
+        default:
+          router.push('/profile')
+      }
     }
 
     const logout = () => {
@@ -656,23 +679,7 @@ tr:hover {
   border-color: #333;
 }
 
-.checkbox-container input[type="checkbox"]:disabled {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
-  cursor: not-allowed;
-}
-
-.checkbox-container input[type="checkbox"]:disabled:checked::before {
-  opacity: 0.5;
-}
-
-.checkbox-container label {
-  font-size: 0.875rem;
-  color: #475569;
-  cursor: pointer;
-  user-select: none;
-}
-
+/* Update status badge styles */
 .status-badge {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -686,6 +693,31 @@ tr:hover {
 .status-badge.sent {
   background-color: #dcfce7;
   color: #16a34a;
+}
+
+/* Update checkbox styles for disabled state */
+.checkbox-container input[type="checkbox"]:disabled {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkbox-container input[type="checkbox"]:disabled:checked::before {
+  opacity: 0.5;
+  color: #94a3b8;
+}
+
+.checkbox-container input[type="checkbox"]:disabled + label {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.checkbox-container label {
+  font-size: 0.875rem;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
 }
 
 .action-buttons {

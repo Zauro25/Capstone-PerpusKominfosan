@@ -117,7 +117,20 @@ export default {
     }
 
     const goToSettings = () => {
-      router.push('/profile')
+      const userType = localStorage.getItem('userType') || sessionStorage.getItem('userType')
+      switch(userType) {
+        case 'admin_perpustakaan':
+          router.push('/profile')
+          break
+        case 'executive':
+          router.push('/profile-executive')
+          break
+        case 'admin_dpk':
+          router.push('/profile-dpk')
+          break
+        default:
+          router.push('/profile')
+      }
     }
 
     const logout = () => {
