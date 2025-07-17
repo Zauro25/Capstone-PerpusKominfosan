@@ -12,7 +12,7 @@
         <span></span>
       </button>
       <div class="header-left">
-        <img src="../assets/logo-sidapus.png" alt="Logo" class="logo" />
+        <img src="../../assets/logo-sidapus.png" alt="Logo" class="logo" />
         <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
       </div>
       <div class="header-right">
@@ -136,9 +136,9 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
-import { useLibraryStore } from '../store/libraryStore'
+import { useLibraryStore } from '../../store/libraryStore.js'
 import { useRouter } from 'vue-router'
-import { useSubmissionStore } from '../store/submissionStore'
+import { useSubmissionStore } from '../../store/submissionStore.js'
 
 export default {
   name: 'PengirimanData',

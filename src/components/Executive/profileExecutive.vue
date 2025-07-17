@@ -12,19 +12,12 @@
           <span></span>
         </button>
         <div class="header-left">
-          <img src="../assets/logo-sidapus.png" alt="Logo" class="logo" />
+          <img src="../../assets/logo-sidapus.png" alt="Logo" class="logo" />
           <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
         </div>
         <div class="header-right">
-          <div class="notification-btn" @click="navigateToNotifications">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span v-if="hasUnreadNotifications" class="notification-dot"></span>
-          </div>
           <div class="profile-btn" @click="goToSettings">
-            <span>{{ userProfile?.nama_lengkap || 'Admin Perpustakaan' }}</span>
+            <span>Executive</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -38,18 +31,12 @@
         <!-- Sidebar -->
         <aside class="sidebar" :class="{ 'active': isSidebarOpen }">
           <nav class="sidebar-menu">
-            <button class="nav-btn active" @click="dashboard">
+            <router-link to="/dashboard-executive" class="nav-btn">
               <span>Dashboard</span>
-            </button>
-            <button class="nav-btn" @click="navigateTo('input-update')">
-              <span>Input & Update Data</span>
-            </button>
-            <button class="nav-btn" @click="navigateTo('pengiriman')">
-              <span>Pengiriman Data</span>
-            </button>
-            <button class="nav-btn" @click="navigateTo('validasi')">
-              <span>Validasi dan Revisi dari DPK</span>
-            </button>
+            </router-link>
+            <router-link to="/profile-executive" class="nav-btn active">
+              <span>Pengaturan akun</span>
+            </router-link>
           </nav>
           <button class="sidebar-logout-btn" @click="logout">
             <span>Keluar</span>
@@ -95,7 +82,6 @@
                 <div class="detail-value" style="color: black;">{{ userProfile.username || '-' }}</div>
               </div>
               <div class="form-actions">
-                <button @click="handleEditProfile" class="edit-btn">Edit Profil</button>
               </div>
             </div>
           </div>
@@ -105,7 +91,7 @@
   </template>
   
   <script>
-  import { useProfileStore } from '../store/profilestore'
+  import { useProfileStore } from '../../store/profilestore.js'
   import { computed, ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   
@@ -116,7 +102,6 @@
       const profileStore = useProfileStore()
   
       const isSidebarOpen = ref(false)
-      const hasUnreadNotifications = ref(false)
   
       const toggleSidebar = () => {
         isSidebarOpen.value = !isSidebarOpen.value
@@ -144,10 +129,6 @@
         router.push('/login')
       }
   
-      const navigateToNotifications = () => {
-        router.push('/notifications')
-      }
-  
       const userProfile = computed(() => profileStore.userProfile)
   
       onMounted(async () => {
@@ -169,14 +150,12 @@
   
       return {
         isSidebarOpen,
-        hasUnreadNotifications,
         toggleSidebar,
         handleEditProfile,
         navigateTo,
         dashboard,
         goToSettings,
         logout,
-        navigateToNotifications,
         userProfile,
       }
     }
@@ -492,12 +471,12 @@
   }
   
   .nav-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: #6528F7;
     transform: translateX(5px);
   }
   
   .nav-btn.active {
-    background-color: #4318FF;
+    background-color: #6528F7;
   }
   
   .nav-btn i {

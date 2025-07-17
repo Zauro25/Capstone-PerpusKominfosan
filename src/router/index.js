@@ -1,14 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from '../components/LoginPage.vue'
-import DashboardPage from '../components/DashboardPage.vue'
-import InputUpdatePage from '../components/input&updatePage.vue'
-import DaftarData from '../components/DaftarData.vue'
-import PengirimanDataPage from '../components/pengirimanDataPage.vue'
-import ValidasiPage from '../components/validasi.vue'
-import NotificationPage from '../components/NotificationPage.vue'
+import DashboardPage from '../components/Admin perpustakaan/DashboardPage.vue'
+import InputUpdatePage from '../components/Admin perpustakaan/input&updatePage.vue'
+import DaftarData from '../components/Admin perpustakaan/DaftarData.vue'
+import PengirimanDataPage from '../components/Admin perpustakaan/pengirimanDataPage.vue'
+import ValidasiPage from '../components/Admin perpustakaan/validasi.vue'
+import NotificationPage from '../components/Admin perpustakaan/NotificationPage.vue'
 import LandingPage from '../components/LandingPage.vue'
-import Profile from '../components/profile.vue'
-import ProfileEdit from '../components/profileedit.vue'
+import Profile from '../components/Admin perpustakaan/profile.vue'
+import ProfileEdit from '../components/Admin perpustakaan/profileedit.vue'
+import DashboardExecutive from '../components/Executive/DashboardExecutive.vue'
+import ProfileExecutive from '../components/Executive/profileExecutive.vue'
 
 const routes = [
   {
@@ -25,6 +27,18 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardPage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/dashboard-executive',
+    name: 'dashboard-executive',
+    component: DashboardExecutive,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile-executive',
+    name: 'profile-executive',
+    component: ProfileExecutive,
     meta: { requiresAuth: true }
   },
   {
@@ -70,13 +84,13 @@ const routes = [
   {
     path: '/detail/:id',
     name: 'detail',
-    component: () => import('../components/DetailPage.vue'),
+    component: () => import('../components/Admin perpustakaan/DetailPage.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/input-update/:id',
     name: 'edit-library',
-    component: () => import('../components/input&updatePage.vue'),
+    component: () => import('../components/Admin perpustakaan/input&updatePage.vue'),
     meta: { requiresAuth: true }
   }
 ]

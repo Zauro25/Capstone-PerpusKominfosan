@@ -101,7 +101,7 @@
 </template>
 
 <script>
-import { useProfileStore } from '../store/profilestore'
+import { useProfileStore } from '../../store/profilestore.js'
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from './Header.vue'

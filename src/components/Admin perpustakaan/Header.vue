@@ -10,7 +10,7 @@
       <span></span>
     </button>
     <div class="header-left">
-      <img src="../assets/logo-sidapus.png" alt="Logo" class="logo" />
+      <img src="../../assets/logo-sidapus.png" alt="Logo" class="logo" />
       <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
     </div>
     <div class="header-right">

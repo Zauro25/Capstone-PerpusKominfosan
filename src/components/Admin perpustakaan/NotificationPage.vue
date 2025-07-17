@@ -12,7 +12,7 @@
         <span></span>
       </button>
       <div class="header-left">
-        <img src="../assets/logo-sidapus.png" alt="Logo" class="logo" />
+        <img src="../../assets/logo-sidapus.png" alt="Logo" class="logo" />
         <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
       </div>
       <div class="header-right">
@@ -87,7 +87,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useNotificationStore } from '../store/notificationStore'
+import { useNotificationStore } from '../../store/notificationStore.js'
 
 export default {
   name: 'NotificationPage',

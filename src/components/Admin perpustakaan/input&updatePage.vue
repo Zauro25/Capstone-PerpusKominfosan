@@ -136,7 +136,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useLibraryStore } from '../store/libraryStore'
+import { useLibraryStore } from '../../store/libraryStore.js'
 import Header from './Header.vue'
 
 export default {

@@ -120,15 +120,25 @@ export default {
         // Mock login - replace with actual API call
         await new Promise(resolve => setTimeout(resolve, 1000))
         
+        // Simulate user role check (replace with actual role check from API)
+        const userRole = this.form.username.includes('executive') ? 'executive' : 'admin_perpustakaan'
+        
         if (this.form.rememberMe) {
           localStorage.setItem('authToken', 'mock-token')
           localStorage.setItem('userEmail', this.form.username)
+          localStorage.setItem('userType', userRole)
         } else {
           sessionStorage.setItem('authToken', 'mock-token')
+          sessionStorage.setItem('userType', userRole)
           localStorage.removeItem('userEmail')
         }
 
-        this.$router.push('/dashboard')
+        // Redirect based on user role
+        if (userRole === 'executive') {
+          this.$router.push('/dashboard-executive')
+        } else {
+          this.$router.push('/dashboard')
+        }
       } catch (error) {
         console.error('Login failed', error)
         alert('Login gagal. Silakan cek email dan password Anda.')
@@ -271,7 +281,7 @@ export default {
 .remember-me input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  border: 2px solid #333;
+  border: 2px solid white;
   border-radius: 4px;
   cursor: pointer;
   appearance: none;
@@ -285,13 +295,13 @@ export default {
 
 .remember-me input[type="checkbox"]:checked {
   background-color: white;
-  border-color: #333;
+  border-color: black;
 }
 
 .remember-me input[type="checkbox"]:checked::before {
   content: "✓";
   position: absolute;
-  color: #333;
+  color: black;
   font-size: 16px;
   font-weight: 900;
   left: 2px;
@@ -304,7 +314,7 @@ export default {
 }
 
 .remember-me input[type="checkbox"]:hover {
-  border-color: #333;
+  border-color: black;
 }
 
 .remember-me label {
