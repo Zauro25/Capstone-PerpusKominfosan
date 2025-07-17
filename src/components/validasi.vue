@@ -17,17 +17,17 @@
       </div>
       <div class="header-right">
         <div class="notification-btn" @click="navigateToNotifications">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span v-if="hasUnreadNotifications" class="notification-dot"></span>
+          <div class="notification-dot"></div>
         </div>
         <div class="profile-btn" @click="goToSettings">
           <span>Admin Perpustakaan</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
       </div>
@@ -47,7 +47,7 @@
           <button class="nav-btn" @click="navigateTo('pengiriman')">
             <span>Pengiriman Data</span>
           </button>
-          <button class="nav-btn active">
+          <button class="nav-btn active" @click="navigateTo('validasi')">
             <span>Validasi dan Revisi dari DPK</span>
           </button>
         </nav>
@@ -56,235 +56,304 @@
         </button>
       </aside>
 
-      <!-- Sidebar Overlay for Mobile -->
+      <!-- Sidebar Overlay -->
       <div 
         class="sidebar-overlay" 
         :class="{ 'active': isSidebarOpen }" 
         @click="toggleSidebar"
       ></div>
 
-      <!-- Main Section -->
-      <main class="main-section">
-        <div class="content-container">
-          <h1 class="page-title">Validasi dan Revisi dari DPK</h1>
+      <!-- Validation Content -->
+      <div class="validation-content">
+        <h2>Validasi dan Revisi dari DPK</h2>
+        
+        <div class="data-section">
+          <h3>Data Perpustakaan</h3>
           
-          <div class="data-section">
-            <h2>Data Perpustakaan</h2>
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Priode</th>
-                    <th>Nama Perpustakaan</th>
-                    <th>Nama Kepala</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="library in libraries" :key="library.id">
-                    <td>{{ formatPeriode(library.periode) }}</td>
-                    <td>{{ library.nama }}</td>
-                    <td>{{ library.kepalaPerpustakaan }}</td>
-                    <td>
-                      <span 
-                        class="status-badge"
-                        :class="{
-                          'menunggu': library.status === 'Menunggu',
-                          'revisi': library.status === 'Revisi',
-                          'valid': library.status === 'Valid'
-                        }"
-                      >
-                        {{ library.status }}
-                      </span>
-                    </td>
-                    <td class="action-buttons">
-                      <button 
-                        class="action-btn validate-btn" 
-                        @click="updateValidationStatus(library.id, 'Valid')"
-                        v-if="library.status !== 'Valid'"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M20 6L9 17l-5-5"/>
-                        </svg>
-                        <span>Validasi</span>
-                      </button>
-                      <button 
-                        class="action-btn revise-btn" 
-                        @click="updateValidationStatus(library.id, 'Revisi')"
-                        v-if="library.status !== 'Revisi'"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                        <span>Revisi</span>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Priode</th>
+                  <th>Nama Perpustakaan</th>
+                  <th>Nama Kepala</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="library in libraries" :key="library.id">
+                  <td>{{ formatPeriode(library.periode) }}</td>
+                  <td>{{ library.nama }}</td>
+                  <td>{{ library.kepalaPerpustakaan }}</td>
+                  <td>
+                    <span 
+                      class="status-badge"
+                      :class="{
+                        'status-not-sent': library.status === 'Belum Dikirim' || !library.status,
+                        'status-sent': library.status === 'Sudah Dikirim',
+                        'status-waiting': library.status === 'Menunggu',
+                        'status-revision': library.status === 'Revisi',
+                        'status-valid': library.status === 'Valid',
+                        'status-revised': library.status === 'Telah Direvisi'
+                      }"
+                    >
+                      {{ library.status || 'Belum Dikirim' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button 
+                      class="edit-btn" 
+                      @click="editLibrary(library)"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12.7038 0.0476074L15.9524 3.29622L5.93025 13.3184L2.68164 10.0698L12.7038 0.0476074Z" fill="black"/>
+                        <path d="M1.9288 11.3167L4.68332 14.0712L0 16.0001L1.9288 11.3167Z" fill="black"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Revision Note -->
+          <div v-if="selectedLibrary?.status === 'Revisi'" class="revision-note">
+            <h4>Catatan Revisi dari Admin DPK:</h4>
+            <p>{{ selectedLibrary.revisionNote }}</p>
+          </div>
+
+          <!-- Revision Form -->
+          <div v-if="showRevisionForm" class="revision-form">
+            <h3>Identitas Perpustakaan</h3>
+            
+            <div class="form-group">
+              <label>Periode</label>
+              <select v-model="revisionData.periode">
+                <option value="Semester Genap 2025/2026">Semester Genap 2025/2026</option>
+                <!-- Add more options as needed -->
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nomor Induk</label>
+                <input type="text" v-model="revisionData.nomorInduk" placeholder="220010814562" />
+              </div>
+              <div class="form-group">
+                <label>Nama Perpustakaan</label>
+                <input type="text" v-model="revisionData.nama" placeholder="Perpustakaan Kota Yogyakarta" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Kepala Perpustakaan</label>
+                <input type="text" v-model="revisionData.kepalaPerpustakaan" placeholder="Budi Sumanto" />
+              </div>
+              <div class="form-group">
+                <label>Tahun Berdiri</label>
+                <input type="text" v-model="revisionData.tahunBerdiri" placeholder="2010" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Alamat</label>
+              <input type="text" v-model="revisionData.alamat" placeholder="Jl. Malioboro No. 123, Yogyakarta" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jenis Perpustakaan</label>
+                <input type="text" v-model="revisionData.jenis" placeholder="Umum" />
+              </div>
+              <div class="form-group">
+                <label>Jumlah SDM</label>
+                <input type="text" v-model="revisionData.jumlahSdm" placeholder="114" :class="{ 'error': revisionData.jumlahSdm === '114' }" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jumlah Pengunjung</label>
+                <input type="text" v-model="revisionData.jumlahPengunjung" placeholder="3000" />
+              </div>
+              <div class="form-group">
+                <label>Anggota Aktif</label>
+                <input type="text" v-model="revisionData.anggotaAktif" placeholder="1500" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-cancel" @click="cancelRevision">Batal</button>
+              <button class="btn-submit" @click="submitRevision">Revisi</button>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLibraryStore } from '../store/libraryStore'
+import Header from './Header.vue'
 
 export default {
   name: 'ValidasiPage',
+  components: {
+    Header
+  },
   setup() {
     const router = useRouter()
     const libraryStore = useLibraryStore()
     const isSidebarOpen = ref(false)
-    const hasUnreadNotifications = ref(true)
-    const libraries = ref([])
-    const isMobile = ref(false)
-
-    // Load library data with validation status
-    const loadLibraryData = () => {
-      try {
-        // Get all libraries from store
-        const allLibraries = libraryStore.libraries
-        // Add validation status if not present
-        libraries.value = allLibraries.map(lib => ({
-          ...lib,
-          status: lib.status || 'Menunggu' // Default status if not set
-        }))
-      } catch (error) {
-        console.error('Error loading library data:', error)
-      }
-    }
-
-    // Update library validation status
-    const updateValidationStatus = async (libraryId, newStatus) => {
-      try {
-        await libraryStore.updateLibrary(libraryId, {
-          status: newStatus
-        })
-        // Reload data to reflect changes
-        loadLibraryData()
-      } catch (error) {
-        console.error('Error updating validation status:', error)
-      }
-    }
-
-    // Edit library data
-    const editLibrary = (id) => {
-      router.push(`/input-update?edit=${id}`)
-    }
-
-    // Format period string
-    const formatPeriode = (periode) => {
-      if (!periode) return ''
-      const [year, semester] = periode.split('-')
-      const semesterText = semester === '1' ? 'Ganjil' : 'Genap'
-      const nextYear = parseInt(year) + 1
-      return `Semester ${semesterText} ${year}/${nextYear}`
-    }
-
-    onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
-      // Load initial data
-      loadLibraryData()
+    const showRevisionForm = ref(false)
+    const selectedLibrary = ref(null)
+    const revisionData = ref({
+      periode: '',
+      nomorInduk: '',
+      nama: '',
+      kepalaPerpustakaan: '',
+      tahunBerdiri: '',
+      alamat: '',
+      jenis: '',
+      jumlahSdm: '',
+      jumlahPengunjung: '',
+      anggotaAktif: ''
     })
 
-    const checkMobile = () => {
-      isMobile.value = window.innerWidth <= 768
+    // Format periode from "2024-1" to "Semester Ganjil 2024/2025"
+    const formatPeriode = (periode) => {
+      if (!periode) return ''
+      
+      const [tahun, semester] = periode.split('-')
+      const tahunAkhir = parseInt(tahun) + 1
+      const jenisSemester = semester === '1' ? 'Ganjil' : 'Genap'
+      
+      return `Semester ${jenisSemester} ${tahun}/${tahunAkhir}`
     }
 
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value
-      if (isMobile.value) {
-        document.body.style.overflow = isSidebarOpen.value ? 'hidden' : ''
-      }
-    }
-
-    const handleClickOutside = (event) => {
-      if (isSidebarOpen.value && isMobile.value) {
-        const sidebar = document.querySelector('.sidebar')
-        const menuToggle = document.querySelector('.hamburger-menu')
-        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
-          toggleSidebar()
-        }
-      }
     }
 
     const navigateTo = (route) => {
-      // Close sidebar on navigation if mobile
-      if (isMobile.value) {
-        toggleSidebar()
-      }
-
-      switch (route) {
-        case 'dashboard':
-          router.push('/dashboard')
-          break
-        case 'input-update':
-          router.push('/input-update')
-          break
-        case 'pengiriman':
-          router.push('/pengiriman')
-          break
-        case 'validasi':
-          router.push('/validasi')
-          break
-        case 'daftar-data-update':
-          router.push('/daftar-data-update')
-          break
-        default:
-          router.push(`/${route}`)
-      }
+      router.push(`/${route}`)
     }
 
     const navigateToNotifications = () => {
-      if (isMobile.value) {
-        toggleSidebar()
-      }
       router.push('/notifications')
     }
 
     const goToSettings = () => {
-      if (isMobile.value) {
-        toggleSidebar()
-      }
-      router.push('/settings')
+      router.push('/profile')
     }
 
     const logout = () => {
-      // Clear auth tokens
       localStorage.removeItem('authToken')
       sessionStorage.removeItem('authToken')
-      localStorage.removeItem('lastRoute')
       router.push('/login')
     }
 
-    // Cleanup on component unmount
-    onUnmounted(() => {
-      window.removeEventListener('resize', checkMobile)
-      document.removeEventListener('click', handleClickOutside)
+    const editLibrary = (library) => {
+      selectedLibrary.value = library
+      if (library.status === 'Revisi') {
+        showRevisionForm.value = true
+        // Populate revision form with existing data
+        revisionData.value = {
+          periode: library.periode,
+          nomorInduk: library.nomorInduk || '',
+          nama: library.nama,
+          kepalaPerpustakaan: library.kepalaPerpustakaan,
+          tahunBerdiri: library.tahunBerdiri || '',
+          alamat: library.alamat || '',
+          jenis: library.jenis || '',
+          jumlahSdm: library.jumlahSdm || '',
+          jumlahPengunjung: library.jumlahPengunjung || '',
+          anggotaAktif: library.anggotaAktif || ''
+        }
+      }
+    }
+
+    const cancelRevision = () => {
+      showRevisionForm.value = false
+      selectedLibrary.value = null
+      // Reset form data
+      revisionData.value = {
+        periode: '',
+        nomorInduk: '',
+        nama: '',
+        kepalaPerpustakaan: '',
+        tahunBerdiri: '',
+        alamat: '',
+        jenis: '',
+        jumlahSdm: '',
+        jumlahPengunjung: '',
+        anggotaAktif: ''
+      }
+    }
+
+    const submitRevision = () => {
+      if (selectedLibrary.value) {
+        const updatedData = {
+          ...selectedLibrary.value,
+          ...revisionData.value,
+          status: 'Telah Direvisi'
+        }
+        libraryStore.updateLibrary(selectedLibrary.value.id, updatedData)
+      }
+      showRevisionForm.value = false
+      selectedLibrary.value = null
+      // Reset form data
+      revisionData.value = {
+        periode: '',
+        nomorInduk: '',
+        nama: '',
+        kepalaPerpustakaan: '',
+        tahunBerdiri: '',
+        alamat: '',
+        jenis: '',
+        jumlahSdm: '',
+        jumlahPengunjung: '',
+        anggotaAktif: ''
+      }
+    }
+
+    // Load data on component mount
+    onMounted(() => {
+      // Load data from store
+      libraryStore.loadFromLocalStorage()
+
+      // Set initial status for new data if not set
+      const libraries = libraryStore.libraries
+      libraries.forEach(library => {
+        if (!library.status) {
+          libraryStore.updateLibrary(library.id, {
+            ...library,
+            status: 'Belum Dikirim'
+          })
+        }
+      })
     })
 
     return {
       isSidebarOpen,
-      hasUnreadNotifications,
-      libraries,
+      libraries: libraryStore.libraries,
+      showRevisionForm,
+      selectedLibrary,
+      revisionData,
       toggleSidebar,
       navigateTo,
       navigateToNotifications,
       goToSettings,
       logout,
-      formatPeriode,
       editLibrary,
-      updateValidationStatus
+      cancelRevision,
+      submitRevision,
+      formatPeriode
     }
   }
 }
@@ -352,7 +421,7 @@ html, body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-left: auto;
 }
 
@@ -371,11 +440,11 @@ html, body {
 
 .notification-dot {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: 0;
+  right: 0;
   width: 8px;
   height: 8px;
-  background-color: #FF4B4B;
+  background-color: #ef4444;
   border-radius: 50%;
 }
 
@@ -383,7 +452,6 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem;
   color: white;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -524,6 +592,7 @@ html, body {
   display: flex;
   height: calc(100vh - 70px);
   margin-top: 70px;
+  overflow: hidden;
 }
 
 /* Main Section */
@@ -603,6 +672,11 @@ html, body {
 .status-badge.valid {
   background-color: #D1FAE5;
   color: #065F46;
+}
+
+.status-badge.revised {
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 
 .edit-btn {
@@ -727,5 +801,253 @@ html, body {
   .logo {
     height: 25px;
   }
+}
+
+.validation-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 2rem;
+  background-color: white;
+  overflow-y: auto;
+  height: 100%;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2.5rem;
+}
+
+.data-section h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.table-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background-color: white;
+  color: #1e293b;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+td {
+  padding: 1rem;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: white;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-not-sent {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.status-sent {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-waiting {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+.status-revision {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+.status-valid {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-revised {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  opacity: 0.7;
+}
+
+.edit-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.edit-btn i {
+  font-size: 1rem;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .validation-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  table {
+    font-size: 0.875rem;
+  }
+
+  th, td {
+    padding: 0.75rem;
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+.revision-note {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #fef2f2;
+  border-radius: 0.5rem;
+  border: 1px solid #fecaca;
+}
+
+.revision-note h4 {
+  color: #991b1b;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.revision-note p {
+  color: #991b1b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.revision-form {
+  margin-top: 2rem;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.revision-form h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.form-group input.error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-submit {
+  padding: 0.5rem 1rem;
+  background-color: #1e40af;
+  border: none;
+  border-radius: 0.375rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background-color: #f8fafc;
+}
+
+.btn-submit:hover {
+  background-color: #1e3a8a;
 }
 </style>

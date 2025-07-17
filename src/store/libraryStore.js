@@ -5,6 +5,19 @@ export const useLibraryStore = defineStore('library', () => {
   const libraries = ref([])
   const currentLibrary = ref(null)
 
+  // Fungsi untuk menyimpan data ke localStorage
+  const saveToLocalStorage = () => {
+    localStorage.setItem('libraryData', JSON.stringify(libraries.value))
+  }
+
+  // Fungsi untuk memuat data dari localStorage
+  const loadFromLocalStorage = () => {
+    const saved = localStorage.getItem('libraryData')
+    if (saved) {
+      libraries.value = JSON.parse(saved)
+    }
+  }
+
   // Fungsi untuk menambah data perpustakaan baru
   const addLibrary = (libraryData) => {
     const newLibrary = {
@@ -12,6 +25,7 @@ export const useLibraryStore = defineStore('library', () => {
       ...libraryData
     }
     libraries.value.push(newLibrary)
+    saveToLocalStorage() // Simpan ke localStorage setelah menambah
     return newLibrary
   }
 
@@ -28,6 +42,7 @@ export const useLibraryStore = defineStore('library', () => {
         ...libraries.value[index],
         ...updatedData
       }
+      saveToLocalStorage() // Simpan ke localStorage setelah update
       return libraries.value[index]
     }
     return null
@@ -38,6 +53,7 @@ export const useLibraryStore = defineStore('library', () => {
     const index = libraries.value.findIndex(lib => lib.id === id)
     if (index !== -1) {
       libraries.value.splice(index, 1)
+      saveToLocalStorage() // Simpan ke localStorage setelah hapus
       return true
     }
     return false
@@ -48,6 +64,9 @@ export const useLibraryStore = defineStore('library', () => {
     currentLibrary.value = library
   }
 
+  // Load data from localStorage when store is created
+  loadFromLocalStorage()
+
   return {
     libraries,
     currentLibrary,
@@ -55,6 +74,7 @@ export const useLibraryStore = defineStore('library', () => {
     getLibraryById,
     updateLibrary,
     deleteLibrary,
-    setCurrentLibrary
+    setCurrentLibrary,
+    loadFromLocalStorage // Export untuk digunakan di komponen jika perlu
   }
 }) 

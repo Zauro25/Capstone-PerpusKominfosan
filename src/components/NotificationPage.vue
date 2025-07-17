@@ -57,45 +57,46 @@
       </aside>
 
       <!-- Sidebar Overlay for Mobile -->
-      <div 
-        class="sidebar-overlay" 
-        :class="{ 'active': isSidebarOpen }" 
-        @click="toggleSidebar"
-      ></div>
+      <div class="sidebar-overlay" 
+           :class="{ 'active': isSidebarOpen }" 
+           @click="toggleSidebar">
+      </div>
 
-      <!-- Main Section -->
-      <main class="notification-content">
-        <h2 class="page-title">Notifikasi</h2>
-
-        <div class="notifications-list">
+      <!-- Notification Content -->
+      <div class="notification-content">
+        <h2 class="notification-title">Notifikasi</h2>
+        <div class="notification-list">
           <div class="notification-item needs-revision">
             <div class="notification-time">18 Juni 2025, 14:30</div>
-            <div class="notification-status revision">Status: Perlu Revisi</div>
+            <div class="notification-status">Status: <span class="status-revision">Direvisi</span></div>
             <div class="notification-note">
               <strong>Catatan:</strong> Jumlah Pengunjung bulan Oktober tampaknya tidak realistis (tulis 50 orang, normalnya 200-300 orang). Mohon dicek kembali dan perbaiki. Juga perlu melengkapi data SDM pustakawan yang masih kosong.
             </div>
           </div>
 
-          <div class="notification-item valid">
+          <div class="notification-item sent">
             <div class="notification-time">17 Juni 2025, 9:30</div>
-            <div class="notification-status valid">Status: Valid</div>
+            <div class="notification-status">Status: <span class="status-sent">Dikirim</span></div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useNotificationStore } from '../store/notificationStore'
 
 export default {
   name: 'NotificationPage',
   setup() {
     const router = useRouter()
+    const notificationStore = useNotificationStore()
     const isSidebarOpen = ref(false)
-    const hasUnreadNotifications = ref(true)
+
+    const hasUnreadNotifications = computed(() => notificationStore.hasUnreadNotifications)
 
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value
@@ -116,7 +117,7 @@ export default {
     }
 
     const goToSettings = () => {
-      router.push('/settings')
+      router.push('/profile')
     }
 
     const logout = () => {
@@ -124,6 +125,10 @@ export default {
       sessionStorage.removeItem('authToken')
       router.push('/login')
     }
+
+    onMounted(() => {
+      notificationStore.markNotificationsAsRead()
+    })
 
     return {
       isSidebarOpen,
@@ -333,72 +338,104 @@ html, body {
 }
 
 .sidebar-logout-btn {
-  padding: 0.75rem 1rem;
   margin: 1rem;
-  margin-top: auto;
+  padding: 0.75rem 1rem;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: white;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: inter, sans-serif;
-  font-size: 1rem;
 }
 
 .sidebar-logout-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
-}
-
-/* Sidebar Overlay */
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 997;
-}
-
-.sidebar-overlay.active {
-  display: block;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  height: calc(100vh - 70px);
+  min-height: calc(100vh - 70px);
   margin-top: 70px;
 }
 
-/* Main Section */
+/* Notification Content Styles */
 .notification-content {
   flex: 1;
   margin-left: 250px;
   padding: 2rem;
-  background-color: #F3F4F6;
-  min-height: calc(100vh - 70px);
-  overflow-y: auto;
+  background-color: white;
 }
 
-/* Mobile Responsive */
+.notification-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notification-item {
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  background-color: #F1F5F9;
+  border-left: 4px solid;
+}
+
+.notification-item.needs-revision {
+  border-left-color: #f97316;
+}
+
+.notification-item.sent {
+  border-left-color: #22c55e;
+}
+
+.notification-time {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notification-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.status-revision {
+  color: #f97316;
+}
+
+.status-sent {
+  color: #22c55e;
+}
+
+.notification-note {
+  color: #1e293b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.notification-note strong {
+  font-weight: 600;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .hamburger-menu {
     display: block;
-  }
-
-  .header-left h1 {
-    font-size: 0.9rem;
-  }
-
-  .profile-btn span {
-    display: none;
   }
 
   .sidebar {
@@ -413,78 +450,20 @@ html, body {
   .notification-content {
     margin-left: 0;
   }
-}
 
-/* For very small screens */
-@media (max-width: 360px) {
-  .header-left h1 {
-    font-size: 0.8rem;
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 997;
   }
 
-  .logo {
-    height: 25px;
+  .sidebar-overlay.active {
+    display: block;
   }
-}
-
-/* Notification styles */
-.page-title {
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #0E2954;
-  margin-bottom: 1.5rem;
-}
-
-.notifications-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.notification-item {
-  background-color: #EFF6FF;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  border-left: 4px solid;
-}
-
-.notification-item.needs-revision {
-  border-left-color: #F97316;
-}
-
-.notification-item.valid {
-  border-left-color: #22C55E;
-  background-color: #F0FDF4;
-}
-
-.notification-time {
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  font-size: 0.875rem;
-  color: #4B5563;
-  margin-bottom: 0.5rem;
-}
-
-.notification-status {
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-}
-
-.notification-status.revision {
-  color: #F97316;
-}
-
-.notification-status.valid {
-  color: #22C55E;
-}
-
-.notification-note {
-  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-  color: #1F2937;
-  line-height: 1.5;
-}
-
-.notification-note strong {
-  font-weight: 600;
 }
 </style> 

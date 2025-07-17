@@ -1,37 +1,9 @@
 <template>
   <div class="dashboard-container">
-    <!-- Header -->
-    <header class="header">
-      <button 
-        class="hamburger-menu"
-        @click="toggleSidebar"
-        :class="{ 'active': isSidebarOpen }"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <div class="header-left">
-        <img src="../assets/logo-sidapus.png" alt="Logo" class="logo" />
-        <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
-      </div>
-      <div class="header-right">
-        <div class="notification-btn" @click="navigateToNotifications">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span v-if="hasUnreadNotifications" class="notification-dot"></span>
-        </div>
-        <div class="profile-btn" @click="goToSettings">
-          <span>Admin Perpustakaan</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-      </div>
-    </header>
+    <Header 
+      :isSidebarOpen="isSidebarOpen"
+      @toggle-sidebar="toggleSidebar"
+    />
 
     <!-- Main Content -->
     <div class="main-content">
@@ -56,17 +28,17 @@
         </button>
       </aside>
 
-      <!-- Sidebar Overlay for Mobile -->
+      <!-- Sidebar Overlay -->
       <div 
         class="sidebar-overlay" 
-        :class="{ 'active': isSidebarOpen }"
+        :class="{ 'active': isSidebarOpen }" 
         @click="toggleSidebar"
       ></div>
 
       <!-- Main Section -->
       <main class="main-section">
-        <!-- Top Buttons -->
-        <div class="input-header">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
           <button 
             class="tab-button"
             @click="navigateTo('input-update')"
@@ -80,6 +52,7 @@
           </button>
         </div>
 
+        <!-- Detail Content -->
         <div class="detail-container">
           <div class="detail-header">
             <h2>Lihat Detail</h2>
@@ -91,12 +64,12 @@
             </button>
           </div>
 
-          <div class="detail-form" v-if="libraryData">
+          <div class="detail-form" v-if="library">
             <div class="form-section">
-              <h3>Periode</h3>
+              <h3>Priode</h3>
               <div class="form-group">
                 <label>Semester</label>
-                <div class="form-value">{{ libraryData.periode }}</div>
+                <div class="form-value">{{ formatPeriode(library.periode) }}</div>
               </div>
             </div>
 
@@ -104,27 +77,27 @@
               <h3>Identitas Perpustakaan</h3>
               <div class="form-group">
                 <label>Nomor Induk</label>
-                <div class="form-value">{{ libraryData.nomorInduk }}</div>
+                <div class="form-value">{{ library.nomorInduk || '226789567' }}</div>
               </div>
               <div class="form-group">
                 <label>Nama Perpustakaan</label>
-                <div class="form-value">{{ libraryData.nama }}</div>
+                <div class="form-value">{{ library.nama }}</div>
               </div>
               <div class="form-group">
                 <label>Kepala Perpustakaan</label>
-                <div class="form-value">{{ libraryData.kepalaPerpustakaan }}</div>
+                <div class="form-value">{{ library.kepalaPerpustakaan }}</div>
               </div>
               <div class="form-group">
                 <label>Alamat</label>
-                <div class="form-value">{{ libraryData.alamat }}</div>
+                <div class="form-value">{{ library.alamat || 'Jl.Yang Lurus No.123' }}</div>
               </div>
               <div class="form-group">
                 <label>Tahun Berdiri</label>
-                <div class="form-value">{{ libraryData.tahunBerdiri }}</div>
+                <div class="form-value">{{ library.tahunBerdiri }}</div>
               </div>
               <div class="form-group">
                 <label>Jenis Perpustakaan</label>
-                <div class="form-value">{{ libraryData.jenisPerpustakaan }}</div>
+                <div class="form-value">{{ library.jenis || 'Umum' }}</div>
               </div>
             </div>
 
@@ -132,7 +105,7 @@
               <h3>SDM</h3>
               <div class="form-group">
                 <label>Jumlah SDM</label>
-                <div class="form-value">{{ libraryData.jumlahSDM }}</div>
+                <div class="form-value">{{ library.jumlahSdm || '114' }}</div>
               </div>
             </div>
 
@@ -140,13 +113,17 @@
               <h3>Data Pengunjung</h3>
               <div class="form-group">
                 <label>Jumlah Pengunjung</label>
-                <div class="form-value">{{ libraryData.jumlahPengunjung }}</div>
+                <div class="form-value">{{ library.jumlahPengunjung || '3000' }}</div>
               </div>
               <div class="form-group">
                 <label>Anggota Aktif</label>
-                <div class="form-value">{{ libraryData.anggotaAktif }}</div>
+                <div class="form-value">{{ library.anggotaAktif || '1500' }}</div>
               </div>
             </div>
+          </div>
+
+          <div v-else class="not-found">
+            <p>Data perpustakaan tidak ditemukan</p>
           </div>
         </div>
       </main>
@@ -156,98 +133,67 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useLibraryStore } from '../store/libraryStore'
+import Header from './Header.vue'
 
 export default {
   name: 'DetailPage',
+  components: {
+    Header
+  },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const libraryStore = useLibraryStore()
     const isSidebarOpen = ref(false)
-    const hasUnreadNotifications = ref(true)
-    const isMobile = ref(false)
-    const libraryData = ref(null)
+    const library = ref(null)
 
-    onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
-      loadLibraryData()
-    })
-
-    const checkMobile = () => {
-      isMobile.value = window.innerWidth <= 768
+    const formatPeriode = (periode) => {
+      if (!periode) return 'Genap 2025/2026'
+      
+      const [tahun, semester] = periode.split('-')
+      const tahunAkhir = parseInt(tahun) + 1
+      const jenisSemester = semester === '1' ? 'Ganjil' : 'Genap'
+      
+      return `${jenisSemester} ${tahun}/${tahunAkhir}`
     }
 
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value
-      if (window.innerWidth <= 768) {
-        document.body.style.overflow = isSidebarOpen.value ? 'hidden' : ''
-      }
-    }
-
-    const handleClickOutside = (event) => {
-      if (isSidebarOpen.value && window.innerWidth <= 768) {
-        const sidebar = document.querySelector('.sidebar')
-        const menuToggle = document.querySelector('.hamburger-menu')
-        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
-          toggleSidebar()
-        }
-      }
     }
 
     const navigateTo = (route) => {
       router.push(`/${route}`)
-      localStorage.setItem('lastRoute', route)
-    }
-
-    const navigateToNotifications = () => {
-      router.push('/notifications')
-    }
-
-    const goToSettings = () => {
-      router.push('/settings')
-    }
-
-    const logout = () => {
-      localStorage.removeItem('lastRoute')
-      router.push('/login')
     }
 
     const goBack = () => {
       router.push('/daftar-data-update')
     }
 
-    const loadLibraryData = () => {
-      const id = parseInt(router.currentRoute.value.params.id)
-      const data = libraryStore.getLibraryById(id)
-      if (data) {
-        libraryData.value = data
-      } else {
-        router.push('/daftar-data-update')
-      }
+    const logout = () => {
+      localStorage.removeItem('authToken')
+      sessionStorage.removeItem('authToken')
+      router.push('/login')
     }
 
-    const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    }
+    onMounted(() => {
+      const id = parseInt(route.params.id)
+      library.value = libraryStore.getLibraryById(id)
+      
+      if (!library.value) {
+        router.push('/daftar-data-update')
+      }
+    })
 
     return {
       isSidebarOpen,
-      hasUnreadNotifications,
+      library,
       toggleSidebar,
       navigateTo,
-      navigateToNotifications,
-      goToSettings,
-      logout,
       goBack,
-      libraryData,
-      formatDate
+      logout,
+      formatPeriode
     }
   }
 }
@@ -277,104 +223,14 @@ html, body {
   position: relative;
 }
 
-/* Header Styles */
-.header {
-  background-color: #0E2954;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 70px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  height: 35px;
-  width: auto;
-}
-
-.header-left h1 {
-  color: white;
-  font-size: 1.1rem;
-  line-height: 1.3;
-  margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-left: auto;
-}
-
-.notification-btn {
-  position: relative;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: white;
-  transition: opacity 0.2s ease;
-}
-
-.notification-btn:hover {
-  opacity: 0.8;
-}
-
-.notification-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  background-color: #FF4B4B;
-  border-radius: 50%;
-}
-
-.profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  color: white;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.profile-btn:hover {
-  opacity: 0.8;
-}
-
-.profile-btn span {
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.profile-btn svg {
-  width: 24px;
-  height: 24px;
-  stroke: white;
-}
-
-/* Main Content and Sidebar */
+/* Main Content */
 .main-content {
   display: flex;
   height: calc(100vh - 70px);
   margin-top: 70px;
 }
 
-/* Sidebar Styles */
+/* Sidebar */
 .sidebar {
   width: 250px;
   background-color: #0E2954;
@@ -384,7 +240,6 @@ html, body {
   left: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   z-index: 998;
   padding: 0;
   height: calc(100vh - 70px);
@@ -448,38 +303,22 @@ html, body {
   transform: translateX(5px);
 }
 
-/* Mobile Styles */
-.hamburger-menu {
+/* Sidebar Overlay */
+.sidebar-overlay {
   display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  z-index: 1001;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 997;
 }
 
-.hamburger-menu span {
+.sidebar-overlay.active {
   display: block;
-  width: 25px;
-  height: 3px;
-  background-color: white;
-  margin: 5px 0;
-  transition: all 0.3s ease;
 }
 
-.hamburger-menu.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-
-.hamburger-menu.active span:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger-menu.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
-}
-
-/* Detail Content Styles */
 .main-section {
   flex: 1;
   margin-left: 250px;
@@ -487,38 +326,31 @@ html, body {
   background-color: #f8f9fa;
   min-height: calc(100vh - 70px);
   overflow-y: auto;
+  width: calc(100% - 250px);
 }
 
-.detail-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.input-header {
+.tab-navigation {
   display: flex;
-  justify-content: space-between;
-  padding: 0;
-  margin: 0;
+  background: white;
   border-bottom: 1px solid #e5e7eb;
-  background-color: white;
+  margin-bottom: 1rem;
+  justify-content: space-between;
+  padding: 0 4rem;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .tab-button {
-  background: none;
+  padding: 1rem 2rem;
   border: none;
+  background: transparent;
   color: #1f2937;
-  font-size: 1.25rem;
-  font-weight: 600;
-  padding: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 2px solid transparent;
-  margin: 0;
-  flex: 1;
-  text-align: center;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 1.1rem;
 }
 
 .tab-button:hover {
@@ -527,7 +359,25 @@ html, body {
 
 .tab-button.active {
   color: #0E2954;
-  border-bottom: 2px solid #0E2954;
+  font-weight: 600;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #0E2954;
+}
+
+.detail-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .detail-header {
@@ -536,7 +386,6 @@ html, body {
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #e5e7eb;
-  background-color: white;
 }
 
 .detail-header h2 {
@@ -563,67 +412,48 @@ html, body {
 }
 
 .detail-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 0 2rem 2rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 2rem;
 }
 
 .form-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .form-section h3 {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0;
-  margin-bottom: -0.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group {
   display: flex;
-  margin-bottom: 0;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #e2e2e2;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-group:last-child {
+  border-bottom: none;
 }
 
 .form-group label {
   flex: 0 0 200px;
   color: #1f2937;
-  font-weight: 400;
-  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .form-group .form-value {
   flex: 1;
-  color: #1f2937;
-  font-size: 0.9rem;
+  color: #4b5563;
 }
 
-/* Overlay */
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 997;
-}
-
-.sidebar-overlay.active {
-  display: block;
+.not-found {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
 }
 
 @media (max-width: 768px) {
-  .hamburger-menu {
-    display: block;
-  }
-
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
@@ -635,56 +465,37 @@ html, body {
 
   .main-section {
     margin-left: 0;
+    width: 100%;
   }
 
-  .input-header {
-    flex-direction: row;
-    border-bottom: none;
+  .tab-navigation {
+    padding: 0 1rem;
   }
 
   .tab-button {
+    padding: 1rem;
     font-size: 0.9rem;
-    padding: 1rem 0.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    white-space: normal;
-    line-height: 1.2;
-    height: auto;
   }
 
-  .tab-button.active {
-    background-color: rgba(14, 41, 84, 0.05);
+  .detail-container {
+    margin: 1rem;
+  }
+
+  .detail-header {
+    padding: 1rem;
   }
 
   .detail-form {
     padding: 1rem;
-    padding-top: 0.5rem;
-  }
-
-  .header-left h1 {
-    font-size: 0.9rem;
-  }
-
-  .profile-btn span {
-    display: none;
-  }
-}
-
-@media (max-width: 360px) {
-  .tab-button {
-    font-size: 0.75rem;
-    padding: 0.75rem 0.25rem;
   }
 
   .form-group {
-    padding: 0.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .form-group label {
-    font-size: 0.85rem;
-  }
-
-  .form-group .form-value {
-    font-size: 0.85rem;
+    flex: none;
   }
 }
 </style> 

@@ -173,7 +173,7 @@ export default {
     }
 
     const goToSettings = () => {
-      router.push('/settings')
+      router.push('/profile')
     }
 
     const logout = () => {

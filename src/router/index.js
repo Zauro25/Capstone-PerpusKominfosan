@@ -7,6 +7,8 @@ import PengirimanDataPage from '../components/pengirimanDataPage.vue'
 import ValidasiPage from '../components/validasi.vue'
 import NotificationPage from '../components/NotificationPage.vue'
 import LandingPage from '../components/LandingPage.vue'
+import Profile from '../components/profile.vue'
+import ProfileEdit from '../components/profileedit.vue'
 
 const routes = [
   {
@@ -53,6 +55,28 @@ const routes = [
     path: '/notifications',
     name: 'notifications',
     component: NotificationPage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: Profile
+  },
+  {
+    path: '/profile/edit',
+    name: 'profile-edit',
+    component: ProfileEdit
+  },
+  {
+    path: '/detail/:id',
+    name: 'detail',
+    component: () => import('../components/DetailPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/input-update/:id',
+    name: 'edit-library',
+    component: () => import('../components/input&updatePage.vue'),
     meta: { requiresAuth: true }
   }
 ]

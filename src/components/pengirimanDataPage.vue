@@ -138,6 +138,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useLibraryStore } from '../store/libraryStore'
 import { useRouter } from 'vue-router'
+import { useSubmissionStore } from '../store/submissionStore'
 
 export default {
   name: 'PengirimanData',
@@ -148,6 +149,7 @@ export default {
     const isSidebarOpen = ref(false)
     const hasUnreadNotifications = ref(true)
     const isMobile = ref(false)
+    const submissionStore = useSubmissionStore()
 
     // Computed property to get library data grouped by period
     const libraryDataByPeriod = computed(() => {
@@ -234,17 +236,11 @@ export default {
     }
 
     const navigateToNotifications = () => {
-      if (isMobile.value) {
-        toggleSidebar()
-      }
       router.push('/notifications')
     }
 
     const goToSettings = () => {
-      if (isMobile.value) {
-        toggleSidebar()
-      }
-      router.push('/settings')
+      router.push('/profile')
     }
 
     const logout = () => {
@@ -275,6 +271,17 @@ export default {
       }
     }
 
+    const submitData = (data) => {
+      submissionStore.submitData({
+        id: Date.now(),
+        periode: data.periode,
+        namaPerpustakaan: data.namaPerpustakaan,
+        kepala: data.kepala,
+        // ... other data fields ...
+      })
+      // Show success message or handle UI feedback
+    }
+
     return {
       selectedItems,
       isSidebarOpen,
@@ -288,7 +295,8 @@ export default {
       navigateTo,
       navigateToNotifications,
       goToSettings,
-      logout
+      logout,
+      submitData
     }
   }
 }

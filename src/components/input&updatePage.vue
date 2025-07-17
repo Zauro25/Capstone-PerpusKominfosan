@@ -1,37 +1,9 @@
 <template>
   <div class="dashboard-container">
-    <!-- Header -->
-    <header class="header">
-      <button 
-        class="hamburger-menu"
-        @click="toggleSidebar"
-        :class="{ 'active': isSidebarOpen }"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <div class="header-left">
-        <img src="../assets/logo-sidapus.png" alt="Logo" class="logo" />
-        <h1>Sistem Data Perpustakaan<br>Dan Kearsipan</h1>
-      </div>
-      <div class="header-right">
-        <div class="notification-btn" @click="navigateToNotifications">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span v-if="hasUnreadNotifications" class="notification-dot"></span>
-        </div>
-        <div class="profile-btn" @click="goToSettings">
-          <span>Admin Perpustakaan</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-      </div>
-    </header>
+    <Header 
+      :isSidebarOpen="isSidebarOpen"
+      @toggle-sidebar="toggleSidebar"
+    />
 
     <!-- Main Content -->
     <div class="main-content">
@@ -56,7 +28,7 @@
         </button>
       </aside>
 
-      <!-- Sidebar Overlay for Mobile -->
+      <!-- Sidebar Overlay -->
       <div 
         class="sidebar-overlay" 
         :class="{ 'active': isSidebarOpen }" 
@@ -80,139 +52,80 @@
           </button>
         </div>
 
-        <!-- Content Container -->
-        <div class="content-container">
-          <!-- Input Form -->
-          <div class="form-container">
-            <form @submit.prevent="handleSubmit" class="input-form">
-              <h2>Periode</h2>
+        <!-- Form Content -->
+        <div class="form-container">
+          <div class="form-content">
+            <h3>Periode</h3>
+            <div class="form-group">
+              <select v-model="formData.periode">
+                <option value="" disabled selected>Pilih Periode</option>
+                <option value="2025-2">Semester Genap 2025/2026</option>
+                <option value="2025-1">Semester Ganjil 2025/2026</option>
+                <option value="2024-2">Semester Genap 2024/2025</option>
+                <option value="2024-1">Semester Ganjil 2024/2025</option>
+              </select>
+            </div>
+
+            <h3>Identitas Perpustakaan</h3>
+            <div class="form-row">
               <div class="form-group">
-                <select 
-                  id="periode"
-                  v-model="form.periode" 
-                  required
-                >
-                  <option value="" disabled selected>Pilih Periode</option>
-                  <option value="2025-2">Semester Genap 2025/2026</option>
-                  <option value="2024-1">Semester Ganjil 2024/2025</option>
-                  <option value="2024-2">Semester Genap 2024/2025</option>
-                  <option value="2023-1">Semester Ganjil 2023/2024</option>
-                  <option value="2023-2">Semester Genap 2023/2024</option>
+                <label>Nomor Induk</label>
+                <input type="text" v-model="formData.nomorInduk" />
+              </div>
+              <div class="form-group">
+                <label>Nama Perpustakaan</label>
+                <input type="text" v-model="formData.nama" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Kepala Perpustakaan</label>
+                <input type="text" v-model="formData.kepalaPerpustakaan" />
+              </div>
+              <div class="form-group">
+                <label>Tahun Berdiri</label>
+                <input type="text" v-model="formData.tahunBerdiri" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Alamat</label>
+              <input type="text" v-model="formData.alamat" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jenis Perpustakaan</label>
+                <select v-model="formData.jenis">
+                  <option value="" disabled selected>Pilih Jenis</option>
+                  <option value="Umum">Umum</option>
+                  <option value="Khusus">Khusus</option>
+                  <option value="Sekolah">Sekolah</option>
+                  <option value="Perguruan Tinggi">Perguruan Tinggi</option>
                 </select>
               </div>
-
-              <h2>Identitas Perpustakaan</h2>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="nomorInduk">Nomor Induk</label>
-                  <input 
-                    type="number" 
-                    id="nomorInduk" 
-                    v-model.number="form.nomorInduk"
-                    min="0"
-                    @input="validateNomorInduk"
-                    placeholder="Masukkan nomor induk"
-                    required 
-                  />
-                  <span v-if="nomorIndukError" class="error-message">{{ nomorIndukError }}</span>
-                </div>
-                <div class="form-group">
-                  <label for="nama">Nama Perpustakaan</label>
-                  <input 
-                    type="text" 
-                    id="nama" 
-                    v-model="form.nama" 
-                    required 
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="kepalaPerpustakaan">Kepala Perpustakaan</label>
-                  <input 
-                    type="text" 
-                    id="kepalaPerpustakaan" 
-                    v-model="form.kepalaPerpustakaan" 
-                    required 
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="tahunBerdiri">Tahun Berdiri</label>
-                  <input 
-                    type="number" 
-                    id="tahunBerdiri" 
-                    v-model="form.tahunBerdiri" 
-                    required 
-                    min="1900"
-                    max="2100"
-                  />
-                </div>
+              <div class="form-group">
+                <label>Jumlah SDM</label>
+                <input type="text" v-model="formData.jumlahSdm" />
               </div>
+            </div>
 
-              <div class="form-group full-width">
-                <label for="alamat">Alamat</label>
-                <input 
-                  type="text" 
-                  id="alamat" 
-                  v-model="form.alamat" 
-                  required 
-                />
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jumlah Pengunjung</label>
+                <input type="text" v-model="formData.jumlahPengunjung" />
               </div>
+              <div class="form-group">
+                <label>Anggota Aktif</label>
+                <input type="text" v-model="formData.anggotaAktif" />
+              </div>
+            </div>
 
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="jenisPerpustakaan">Jenis Perpustakaan</label>
-                  <select 
-                    id="jenisPerpustakaan" 
-                    v-model="form.jenisPerpustakaan" 
-                    required
-                  >
-                    <option value="" disabled selected>Pilih Jenis</option>
-                    <option value="Umum">Umum</option>
-                    <option value="Khusus">Khusus</option>
-                    <option value="Sekolah">Sekolah</option>
-                    <option value="Perguruan Tinggi">Perguruan Tinggi</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="jumlahSDM">Jumlah SDM</label>
-                  <input 
-                    type="number" 
-                    id="jumlahSDM" 
-                    v-model.number="form.jumlahSDM" 
-                    required 
-                    min="0"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="jumlahPengunjung">Jumlah Pengunjung</label>
-                  <input 
-                    type="number" 
-                    id="jumlahPengunjung" 
-                    v-model.number="form.jumlahPengunjung" 
-                    required 
-                    min="0"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="anggotaAktif">Anggota Aktif</label>
-                  <input 
-                    type="number" 
-                    id="anggotaAktif" 
-                    v-model.number="form.anggotaAktif" 
-                    required 
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              <div class="button-group">
-                <button type="button" class="cancel-btn" @click="handleCancel">
-                  Batal
-                </button>
-                <button type="submit" class="submit-btn">
-                  {{ isEditing ? 'Update Data' : 'Input Data' }}
-                </button>
-              </div>
-            </form>
+            <div class="form-actions">
+              <button type="button" class="btn-cancel" @click="handleCancel">Batal</button>
+              <button type="submit" class="btn-submit">{{ isEditMode ? 'Update' : 'Simpan' }}</button>
+            </div>
           </div>
         </div>
       </main>
@@ -222,191 +135,103 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useLibraryStore } from '../store/libraryStore'
-import './styles/form.css'
+import Header from './Header.vue'
 
 export default {
   name: 'InputUpdatePage',
+  components: {
+    Header
+  },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const libraryStore = useLibraryStore()
     const isSidebarOpen = ref(false)
-    const hasUnreadNotifications = ref(true)
-    const isMobile = ref(false)
-    const isEditing = ref(false)
-    const editingId = ref(null)
-    const nomorIndukError = ref('')
-
-    const form = ref({
+    const isEditMode = ref(false)
+    
+    const formData = ref({
       periode: '',
       nomorInduk: '',
       nama: '',
       kepalaPerpustakaan: '',
-      tahunBerdiri: '',
       alamat: '',
-      jenisPerpustakaan: '',
-      jumlahSDM: 0,
-      jumlahPengunjung: 0,
-      anggotaAktif: 0
+      tahunBerdiri: '',
+      jenis: '',
+      jumlahSdm: '',
+      jumlahPengunjung: '',
+      anggotaAktif: ''
     })
-
-    const validateNomorInduk = (event) => {
-      const value = event.target.value
-      if (value === '') {
-        nomorIndukError.value = 'Nomor induk harus diisi'
-        return
-      }
-      if (isNaN(value)) {
-        nomorIndukError.value = 'Nomor induk harus berupa angka'
-        return
-      }
-      if (value < 0) {
-        nomorIndukError.value = 'Nomor induk tidak boleh negatif'
-        return
-      }
-      nomorIndukError.value = ''
-    }
-
-    onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      document.addEventListener('click', handleClickOutside)
-    })
-
-    const checkMobile = () => {
-      isMobile.value = window.innerWidth <= 768
-    }
 
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value
-      if (window.innerWidth <= 768) {
-        document.body.style.overflow = isSidebarOpen.value ? 'hidden' : ''
-      }
-    }
-
-    const handleClickOutside = (event) => {
-      if (isSidebarOpen.value && window.innerWidth <= 768) {
-        const sidebar = document.querySelector('.sidebar')
-        const menuToggle = document.querySelector('.hamburger-menu')
-        if (!sidebar?.contains(event.target) && !menuToggle?.contains(event.target)) {
-          toggleSidebar()
-        }
-      }
     }
 
     const navigateTo = (route) => {
-      // Close sidebar on navigation if mobile
-      if (isMobile.value) {
-        toggleSidebar()
-      }
-
-      switch (route) {
-        case 'dashboard':
-          router.push('/dashboard')
-          break
-        case 'input-update':
-          router.push('/input-update')
-          break
-        case 'pengiriman':
-          router.push('/pengiriman')
-          break
-        case 'validasi':
-          router.push('/validasi')
-          break
-        case 'daftar-data-update':
-          router.push('/daftar-data-update')
-          break
-        default:
-          router.push(`/${route}`)
-      }
-    }
-
-    const navigateToNotifications = () => {
-      if (isMobile.value) {
-        toggleSidebar()
-      }
-      router.push('/notifications')
+      router.push(`/${route}`)
     }
 
     const goToSettings = () => {
-      if (isMobile.value) {
-        toggleSidebar()
-      }
-      router.push('/settings')
+      router.push('/profile')
     }
 
     const logout = () => {
-      // Clear auth tokens
       localStorage.removeItem('authToken')
       sessionStorage.removeItem('authToken')
-      localStorage.removeItem('lastRoute')
       router.push('/login')
     }
 
-    const handleSubmit = async () => {
-      // Validate nomor induk before submission
-      if (nomorIndukError.value) {
-        return
-      }
-      try {
-        if (isEditing.value) {
-          await libraryStore.updateLibrary(editingId.value, form.value)
-        } else {
-          await libraryStore.addLibrary(form.value)
+    const loadLibraryData = () => {
+      const id = route.query.id
+      if (id && route.query.mode === 'edit') {
+        isEditMode.value = true
+        const library = libraryStore.getLibraryById(parseInt(id))
+        if (library) {
+          formData.value = {
+            periode: library.periode || '',
+            nomorInduk: library.nomorInduk || '',
+            nama: library.nama || '',
+            kepalaPerpustakaan: library.kepalaPerpustakaan || '',
+            alamat: library.alamat || '',
+            tahunBerdiri: library.tahunBerdiri || '',
+            jenis: library.jenis || '',
+            jumlahSdm: library.jumlahSdm || '',
+            jumlahPengunjung: library.jumlahPengunjung || '',
+            anggotaAktif: library.anggotaAktif || ''
+          }
         }
-        // Redirect to daftar data page after successful submission
-        router.push('/daftar-data-update')
-      } catch (error) {
-        console.error('Error saving data:', error)
-        // Here you could add error handling UI feedback
       }
     }
 
-    const handleCancel = () => {
-      // Reset form to initial state
-      form.value = {
-        periode: '',
-        nomorInduk: '',
-        nama: '',
-        kepalaPerpustakaan: '',
-        tahunBerdiri: '',
-        alamat: '',
-        jenisPerpustakaan: '',
-        jumlahSDM: 0,
-        jumlahPengunjung: 0,
-        anggotaAktif: 0
+    const handleSubmit = () => {
+      if (isEditMode.value) {
+        const id = parseInt(route.query.id)
+        libraryStore.updateLibrary(id, formData.value)
+      } else {
+        libraryStore.addLibrary(formData.value)
       }
-      // Navigate back to daftar data page
       router.push('/daftar-data-update')
     }
 
-    // Check if we're editing an existing entry
-    const editId = router.currentRoute.value.query.edit
-    if (editId) {
-      const data = libraryStore.getLibraryById(parseInt(editId))
-      if (data) {
-        form.value = { ...data }
-        isEditing.value = true
-        editingId.value = parseInt(editId)
-      }
+    const handleCancel = () => {
+      router.push('/daftar-data-update')
     }
+
+    onMounted(() => {
+      loadLibraryData()
+    })
 
     return {
       isSidebarOpen,
-      hasUnreadNotifications,
+      isEditMode,
+      formData,
       toggleSidebar,
       navigateTo,
-      navigateToNotifications,
       goToSettings,
       logout,
       handleSubmit,
-      handleCancel,
-      form,
-      isEditing,
-      editingId,
-      nomorIndukError,
-      validateNomorInduk
+      handleCancel
     }
   }
 }
@@ -436,118 +261,11 @@ html, body {
   position: relative;
 }
 
-.header {
-  background-color: #0E2954;
-  color: white;
-  padding: 0.75rem 1.5rem;
+/* Main Content */
+.main-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 70px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  height: 35px;
-  width: auto;
-}
-
-.header-left h1 {
-  color: white;
-  font-size: 1.1rem;
-  line-height: 1.3;
-  margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-left: auto;
-}
-
-.notification-btn {
-  position: relative;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: white;
-  transition: opacity 0.2s ease;
-}
-
-.notification-btn:hover {
-  opacity: 0.8;
-}
-
-.notification-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  background-color: #FF4B4B;
-  border-radius: 50%;
-}
-
-.profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  color: white;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.profile-btn:hover {
-  opacity: 0.8;
-}
-
-.profile-btn span {
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-/* Hamburger Menu */
-.hamburger-menu {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  z-index: 1001;
-}
-
-.hamburger-menu span {
-  display: block;
-  width: 25px;
-  height: 3px;
-  background-color: white;
-  margin: 5px 0;
-  transition: all 0.3s ease;
-}
-
-.hamburger-menu.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-
-.hamburger-menu.active span:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger-menu.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
+  height: calc(100vh - 70px);
+  margin-top: 70px;
 }
 
 /* Sidebar */
@@ -560,7 +278,6 @@ html, body {
   left: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   z-index: 998;
   padding: 0;
   height: calc(100vh - 70px);
@@ -624,29 +341,6 @@ html, body {
   transform: translateX(5px);
 }
 
-/* Sidebar Overlay */
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 997;
-}
-
-.sidebar-overlay.active {
-  display: block;
-}
-
-/* Main Content */
-.main-content {
-  display: flex;
-  height: calc(100vh - 70px);
-  margin-top: 70px;
-}
-
 /* Main Section */
 .main-section {
   flex: 1;
@@ -655,6 +349,7 @@ html, body {
   background-color: #f8f9fa;
   min-height: calc(100vh - 70px);
   overflow-y: auto;
+  width: calc(100% - 250px);
 }
 
 /* Tab Navigation */
@@ -665,6 +360,9 @@ html, body {
   margin-bottom: 1rem;
   justify-content: space-between;
   padding: 0 4rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .tab-button {
@@ -698,20 +396,128 @@ html, body {
   background-color: #0E2954;
 }
 
-/* Mobile Responsive */
+/* Form Styles */
+.form-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.form-header {
+  margin-bottom: 2rem;
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group.full-width {
+  grid-column: span 2;
+}
+
+.form-group label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1f2937;
+  background-color: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #0E2954;
+  box-shadow: 0 0 0 2px rgba(14, 41, 84, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel {
+  padding: 0.75rem 2rem;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #4b5563;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-submit {
+  padding: 0.75rem 2rem;
+  background-color: #0E2954;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.btn-submit:hover {
+  background-color: #1a3a6e;
+}
+
 @media (max-width: 768px) {
-  .hamburger-menu {
-    display: block;
-  }
-
-  .header-left h1 {
-    font-size: 0.9rem;
-  }
-
-  .profile-btn span {
-    display: none;
-  }
-
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
@@ -723,29 +529,159 @@ html, body {
 
   .main-section {
     margin-left: 0;
+    width: 100%;
   }
 
   .tab-navigation {
-    margin: 0;
     padding: 0 1rem;
   }
 
   .tab-button {
-    flex: 1;
-    padding: 1rem 0.5rem;
+    padding: 1rem;
     font-size: 0.9rem;
-    text-align: center;
+  }
+
+  .form-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-group.full-width {
+    grid-column: auto;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
   }
 }
 
-/* For very small screens */
-@media (max-width: 360px) {
-  .header-left h1 {
-    font-size: 0.8rem;
+.form-container {
+  padding: 2rem;
+  background: white;
+}
+
+.form-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 2rem 0 1rem 0;
+}
+
+h3:first-child {
+  margin-top: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1f2937;
+  background-color: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #0E2954;
+  box-shadow: 0 0 0 2px rgba(14, 41, 84, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel {
+  padding: 0.75rem 2rem;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #4b5563;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-submit {
+  padding: 0.75rem 2rem;
+  background-color: #0E2954;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.btn-submit:hover {
+  background-color: #1a3a6e;
+}
+
+@media (max-width: 768px) {
+  .form-container {
+    padding: 1rem;
   }
 
-  .logo {
-    height: 25px;
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
   }
 }
 </style>
