@@ -34,9 +34,6 @@
             <router-link to="/dashboard-executive" class="nav-btn">
               <span>Dashboard</span>
             </router-link>
-            <router-link to="/profile-executive" class="nav-btn active">
-              <span>Pengaturan akun</span>
-            </router-link>
           </nav>
           <button class="sidebar-logout-btn" @click="logout">
             <span>Keluar</span>
@@ -120,7 +117,7 @@
       }
   
       const goToSettings = () => {
-        router.push('/profile')
+        router.push('/profile-executive')
       }
   
       const logout = () => {
@@ -135,11 +132,11 @@
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken')
         const userType = localStorage.getItem('userType') || sessionStorage.getItem('userType')
         console.log('userProfile value:', profileStore.userProfile)
-  
-        if (!token || userType !== 'admin_perpustakaan') {
+
+        if (!token || userType !== 'executive') {
           return router.push('/login')
         }
-  
+
         try {
           await profileStore.fetchUserProfile()
           console.log('User profile:', profileStore.userProfile)

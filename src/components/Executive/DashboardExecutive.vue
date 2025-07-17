@@ -34,9 +34,6 @@
             <router-link to="/dashboard-executive" class="nav-btn">
               <span>Dashboard</span>
             </router-link>
-            <router-link to="/profile-executive" class="nav-btn">
-              <span>Pengaturan akun</span>
-            </router-link>
           </nav>
           <button class="sidebar-logout-btn" @click="logout">
             <span>Keluar</span>
